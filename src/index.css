@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ================================================================
+   Base globals — refined neutrals & buttery typography
+   ================================================================ */
+@layer base {
+  :root {
+    --canvas: #fcfcfb;
+    --canvas-raised: #ffffff;
+    --canvas-edge: #e6e5e1;
+    --ink: #1a1a1f;
+    --ink-muted: #6b6b75;
+    --brand-red: #D32F2F;
+    --brand-glow: #E94855;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', 'DM Sans', sans-serif;
+    color: var(--ink);
+    background-color: var(--canvas);
+  }
+
+  ::selection {
+    background-color: rgba(211, 47, 47, 0.92);
+    color: #ffffff;
+  }
+
+  /* Refined scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--canvas-raised); }
+  ::-webkit-scrollbar-thumb {
+    background: #cbcabf;
+    border-radius: 6px;
+    border: 2px solid var(--canvas-raised);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--brand-red); }
+}
+
+/* ================================================================
+   Reusable visual utilities
+   ================================================================ */
+@layer utilities {
+  /* Glass surface — for floating cards on top of imagery or color fields. */
+  .glass {
+    background: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 12px 36px -16px rgba(15, 18, 24, 0.18);
+  }
+
+  .glass-dark {
+    background: rgba(14, 15, 18, 0.55);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Soft hairline used between body sections. */
+  .hairline { background-image: linear-gradient(90deg, transparent, var(--canvas-edge), transparent); }
+
+  /* Animated underline for nav links */
+  .underline-grow {
+    position: relative;
+  }
+  .underline-grow::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -6px;
+    height: 2px;
+    background: var(--brand-red);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 280ms cubic-bezier(.2,.7,.2,1);
+  }
+  .underline-grow:hover::after { transform: scaleX(1); }
+
+  /* Subtle metallic sheen used on hero borders/accents. */
+  .sheen {
+    background:
+      linear-gradient(120deg,
+        rgba(255,255,255,0) 30%,
+        rgba(255,255,255,0.55) 50%,
+        rgba(255,255,255,0) 70%);
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+  }
+
+  /* Looping shimmer for skeletons / accents */
+  .shimmer {
+    background-image: linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0) 25%,
+      rgba(255, 255, 255, 0.18) 50%,
+      rgba(255, 255, 255, 0) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2.4s linear infinite;
+  }
+
+  /* Blooming red ambient orb — used in a few hero scenes. */
+  .ambient-glow {
+    background:
+      radial-gradient(closest-side, rgba(211,47,47,0.45), rgba(211,47,47,0) 70%);
+    filter: blur(40px);
+  }
+
+  /* Type with a soft red-to-ember vertical gradient. */
+  .text-grad-ember {
+    background: linear-gradient(180deg, #E94855 0%, #D32F2F 60%, #8B1414 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+            color: transparent;
+  }
+
+  /* The big oversized condensed type used as the section backdrop. Kept for
+     the few places that still reference it (mostly cleared in this revamp). */
+  .display-backdrop {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* Mask edges for marquees / soft rails. */
+  .mask-fade-x {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  }
+
+  .mask-fade-y {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+  }
+
+  /* Reduced motion — kill long-running ambient animations. */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-kenburns,
+    .animate-shimmer,
+    .animate-float,
+    .animate-scrollcue,
+    .animate-blob,
+    .sheen,
+    .shimmer {
+      animation: none !important;
+    }
+  }
+}
