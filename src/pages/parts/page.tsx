@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/feature/Navbar";
 import Footer from "@/components/feature/Footer";
 import Reveal from "@/components/motion/Reveal";
-import Magnetic from "@/components/motion/Magnetic";
 import { MachineCardMedia } from "@/components/machines/MachineCardMedia";
 import {
   parts,
@@ -14,91 +13,7 @@ import {
   type PartItem,
 } from "@/mocks/parts";
 import { IndustrialFilterSelect } from "./IndustrialFilterSelect";
-import { usePartsCart } from "@/context/PartsCartContext";
-
-const clampPartQty = (n: number) =>
-  Math.max(1, Math.min(999, Math.floor(Number.isFinite(n) ? n : 1)));
-
-function PartCatalogAddControls({ part }: { part: PartItem }) {
-  const { addPart } = usePartsCart();
-  const [qty, setQty] = useState(1);
-  const [flashQty, setFlashQty] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (flashQty === null) return;
-    const t = window.setTimeout(() => setFlashQty(null), 2200);
-    return () => window.clearTimeout(t);
-  }, [flashQty]);
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-stretch gap-2">
-        <div
-          className="flex items-center rounded-xl border border-canvas-edge bg-canvas h-11 overflow-hidden shrink-0 shadow-sm"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            onClick={() => setQty((q) => clampPartQty(q - 1))}
-            className="w-10 h-full flex items-center justify-center text-ink hover:bg-canvas-sunken transition-colors cursor-pointer"
-            aria-label="Decrease quantity"
-          >
-            <i className="ri-subtract-line text-lg" />
-          </button>
-          <label htmlFor={`qty-${part.id}`} className="sr-only">
-            Quantity for {part.name}
-          </label>
-          <input
-            id={`qty-${part.id}`}
-            type="number"
-            min={1}
-            max={999}
-            value={qty}
-            onChange={(e) =>
-              setQty(clampPartQty(parseInt(e.target.value, 10) || 1))
-            }
-            className="w-11 text-center text-sm font-bold tabular-nums bg-transparent border-x border-canvas-edge h-full outline-none focus:bg-canvas-raised [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-          />
-          <button
-            type="button"
-            onClick={() => setQty((q) => clampPartQty(q + 1))}
-            className="w-10 h-full flex items-center justify-center text-ink hover:bg-canvas-sunken transition-colors cursor-pointer"
-            aria-label="Increase quantity"
-          >
-            <i className="ri-add-line text-lg" />
-          </button>
-        </div>
-        <Magnetic strength={0.2} range={6}>
-          <button
-            type="button"
-            onClick={() => {
-              addPart(part, qty);
-              setFlashQty(qty);
-              setQty(1);
-            }}
-            className={`group/btn flex-1 min-w-0 h-11 px-3 font-bold uppercase tracking-[0.18em] text-[11px] rounded-full transition-all duration-200 cursor-pointer whitespace-nowrap inline-flex items-center justify-center gap-2 ${
-              flashQty !== null
-                ? "bg-canvas-sunken border border-canvas-edge text-ink"
-                : "bg-brand-red text-white hover:bg-brand-glow hover:shadow-glow"
-            }`}
-          >
-            {flashQty !== null ? (
-              <>
-                <i className="ri-check-line text-lg shrink-0" />
-                <span className="truncate">Added ×{flashQty}</span>
-              </>
-            ) : (
-              <>
-                <span className="truncate">Add to cart</span>
-                <i className="ri-shopping-cart-2-line text-base transition-transform duration-300 group-hover/btn:translate-x-0.5 shrink-0" />
-              </>
-            )}
-          </button>
-        </Magnetic>
-      </div>
-    </div>
-  );
-}
+import CatalogQuoteAddControls from "@/components/parts/CatalogQuoteAddControls";
 
 export default function PartsPage() {
   const [selectedMachineType, setSelectedMachineType] = useState<string>("");
@@ -388,7 +303,7 @@ export default function PartsPage() {
                     </div>
 
                     <div className="border-t border-canvas-edge/80 pt-5">
-                      <PartCatalogAddControls part={part} />
+                      <CatalogQuoteAddControls part={part} />
                     </div>
                   </div>
                 </div>

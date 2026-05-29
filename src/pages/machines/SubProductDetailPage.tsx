@@ -11,6 +11,7 @@ import type { PartItem } from "@/mocks/parts";
 import Reveal, { Stagger, RevealItem } from "@/components/motion/Reveal";
 import Magnetic from "@/components/motion/Magnetic";
 import SubProductImageGallery from "@/components/machines/SubProductImageGallery";
+import CatalogQuoteAddControls from "@/components/parts/CatalogQuoteAddControls";
 
 function PartsTableSection({ partsList, machineName }: { partsList: PartItem[]; machineName: string }) {
   if (partsList.length === 0) return null;
@@ -47,6 +48,9 @@ function PartsTableSection({ partsList, machineName }: { partsList: PartItem[]; 
                       <th className="px-4 py-3 text-left font-bold uppercase tracking-[0.25em] text-[10px] text-white/40 w-24">Image</th>
                       <th className="px-4 py-3 text-left font-bold uppercase tracking-[0.25em] text-[10px] text-brand-red">Part #</th>
                       <th className="px-4 py-3 text-left font-bold uppercase tracking-[0.25em] text-[10px] text-white/40">Description</th>
+                      <th className="px-4 py-3 text-left font-bold uppercase tracking-[0.25em] text-[10px] text-brand-red w-[min(11rem,calc(100vw-220px))]">
+                        Quote
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -68,6 +72,9 @@ function PartsTableSection({ partsList, machineName }: { partsList: PartItem[]; 
                             )}
                             <span className="text-ink-subtle text-[10px] mt-0.5 uppercase tracking-[0.2em]">{machineName}</span>
                           </div>
+                        </td>
+                        <td className="px-4 py-3 align-top border-l border-canvas-edge">
+                          <CatalogQuoteAddControls part={part} compact />
                         </td>
                       </tr>
                     ))}

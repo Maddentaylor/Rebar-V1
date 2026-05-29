@@ -211,15 +211,15 @@ export default function PartsCartDrawer() {
                       <i className="ri-shopping-cart-line text-2xl text-ink-subtle" />
                     </div>
                     <p className="text-ink-muted text-sm leading-relaxed">
-                      Your cart is empty. Browse the{" "}
+                      Your cart is empty. Use &quot;Add to cart&quot; in the{" "}
                       <Link
                         to="/parts"
                         onClick={closeCart}
                         className="text-brand-red font-bold hover:underline cursor-pointer"
                       >
                         parts catalog
-                      </Link>{" "}
-                      and use &quot;Add to cart&quot; on any item.
+                      </Link>
+                      , or grab line items from a machine&apos;s Parts &amp; Accessories table below the model specs.
                     </p>
                   </div>
                 ) : (

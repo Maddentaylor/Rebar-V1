@@ -34,6 +34,22 @@ const routes: RouteObject[] = [
     element: <Navigate to="/machines/rms-controller/rms-shearline-controller" replace />,
   },
   {
+    path: "/machines/automation/abl",
+    element: <Navigate to="/machines/automation/dbs3-60n" replace />,
+  },
+  {
+    path: "/machines/automation/bin-pocket-magazine",
+    element: <Navigate to="/machines/automation/dbs3-60n" replace />,
+  },
+  {
+    path: "/machines/automation/chain-conveyor",
+    element: <Navigate to="/machines/automation/dbs3-60n" replace />,
+  },
+  {
+    path: "/machines/automation/pile-cage-machines",
+    element: <Navigate to="/machines/pile-cage/pile-cage-machines" replace />,
+  },
+  {
     path: "/machines/:id",
     element: <MachineDetailPage />,
   },

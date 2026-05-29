@@ -12,14 +12,15 @@ const quickLinks = [
 ];
 
 const equipmentLinks = [
-  { label: "Automation",     path: "/machines/automation"    },
-  { label: "RMS Bender",     path: "/machines/rms-bender"    },
-  { label: "RMS Radius",     path: "/machines/rms-radius"    },
-  { label: "RMS Spiral",     path: "/machines/rms-spiral"    },
-  { label: "RMS Lifting",    path: "/machines/rms-lifting"   },
-  { label: "RMS Shear",      path: "/machines/rms-shear"     },
-  { label: "RMS Shearline",  path: "/machines/rms-shearline" },
-  { label: "RMS Controller", path: "/machines/rms-controller"},
+  { label: "RMS Double Bender", path: "/machines/automation/dbs3-60n" },
+  { label: "RMS Bender",          path: "/machines/rms-bender"            },
+  { label: "RMS Radius",          path: "/machines/rms-radius"            },
+  { label: "RMS Spiral",          path: "/machines/rms-spiral"            },
+  { label: "RMS Shearline",       path: "/machines/rms-shearline"         },
+  { label: "RMS Shear",           path: "/machines/rms-shear"             },
+  { label: "RMS Controller",      path: "/machines/rms-controller"        },
+  { label: "RMS Lifting",         path: "/machines/rms-lifting"           },
+  { label: "Pile Cage Machines",  path: "/machines/pile-cage/pile-cage-machines" },
 ];
 
 export default function Footer() {

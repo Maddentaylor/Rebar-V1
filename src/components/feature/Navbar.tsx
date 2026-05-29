@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Magnetic from "@/components/motion/Magnetic";
 import { usePartsCart } from "@/context/PartsCartContext";
+import { useQuoteModal } from "@/context/QuoteModalContext";
 import { COMPANY } from "@/data/company";
 
 const navLinks = [
@@ -33,6 +34,7 @@ export default function Navbar() {
   const isHome = location.pathname === "/";
   const solid = scrolled || !isHome;
   const { itemCount, openCart } = usePartsCart();
+  const { openQuoteModal } = useQuoteModal();
 
   return (
     <motion.header
@@ -116,15 +118,16 @@ export default function Navbar() {
           </button>
 
           <Magnetic strength={0.35} range={14} className="ml-1">
-            <Link
-              to="/contact"
-              className="group inline-flex items-center gap-2 pl-5 pr-4 h-11 bg-ink text-white text-[12px] font-bold uppercase tracking-[0.18em] rounded-full hover:bg-brand-red transition-colors duration-300 cursor-pointer"
+            <button
+              type="button"
+              onClick={openQuoteModal}
+              className="group inline-flex items-center gap-2 pl-5 pr-4 h-11 bg-ink text-white text-[12px] font-bold uppercase tracking-[0.18em] rounded-full hover:bg-brand-red transition-colors duration-300 cursor-pointer border-0"
             >
               Get a Quote
               <span className="relative w-7 h-7 flex items-center justify-center bg-brand-red rounded-full text-white transition-transform duration-300 group-hover:bg-white group-hover:text-brand-red">
                 <i className="ri-arrow-right-up-line text-sm"></i>
               </span>
-            </Link>
+            </button>
           </Magnetic>
         </nav>
 
@@ -183,13 +186,17 @@ export default function Navbar() {
                 <i className="ri-phone-fill text-brand-red"></i>
                 {COMPANY.phoneMachinesSalesDisplay}
               </a>
-              <Link
-                to="/contact"
-                className="mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 bg-ink text-white text-sm font-bold uppercase tracking-[0.18em] rounded-full cursor-pointer"
+              <button
+                type="button"
+                onClick={() => {
+                  openQuoteModal();
+                  setMenuOpen(false);
+                }}
+                className="mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 bg-ink text-white text-sm font-bold uppercase tracking-[0.18em] rounded-full cursor-pointer border-0 w-full"
               >
                 Get a Quote
                 <i className="ri-arrow-right-up-line"></i>
-              </Link>
+              </button>
             </div>
           </motion.div>
         )}

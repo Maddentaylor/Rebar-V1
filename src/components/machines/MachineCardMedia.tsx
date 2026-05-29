@@ -8,6 +8,8 @@ type MachineCardMediaProps = {
   children?: ReactNode;
   /** Fills fixed card slot with crop + trims soft vignette (>1 hides edges inside same box). */
   lineCoverZoom?: number;
+  /** CSS object-position when `lineCoverZoom` is set (default `center`). */
+  lineCoverObjectPosition?: string;
 };
 
 /**
@@ -28,29 +30,45 @@ export function MachineCardMedia({
 
   return (
     <div className={`relative w-full overflow-hidden ${className}`}>
-      {/* Studio field — stays behind the photo so PNG alpha reveals it */}
-      <div className="absolute inset-0 z-0 bg-[#d7d9de]" aria-hidden />
+      {/* Studio field for contain thumbnails; cover-fill cards use a neutral field only at crop edges */}
       <div
-        className="absolute inset-0 z-0 bg-gradient-to-b from-[#eef0f5] via-[#e1e4ea] to-[#c9cdd6]"
+        className={`absolute inset-0 z-0 ${lineCoverZoom != null ? "bg-[#1a1c20]" : "bg-[#d7d9de]"}`}
         aria-hidden
       />
-      <div
-        className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_100%_72%_at_50%_-8%,rgba(255,255,255,0.75)_0%,transparent_56%)]"
-        aria-hidden
-      />
+      {lineCoverZoom == null && (
+        <>
+          <div
+            className="absolute inset-0 z-0 bg-gradient-to-b from-[#eef0f5] via-[#e1e4ea] to-[#c9cdd6]"
+            aria-hidden
+          />
+          <div
+            className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_100%_72%_at_50%_-8%,rgba(255,255,255,0.75)_0%,transparent_56%)]"
+            aria-hidden
+          />
+        </>
+      )}
 
-      <div className="relative z-10 flex h-full min-h-0 w-full items-center justify-center overflow-hidden p-3 sm:p-4">
+      <div
+        className={
+          lineCoverZoom != null
+            ? "relative z-10 h-full min-h-0 w-full overflow-hidden"
+            : "relative z-10 flex h-full min-h-0 w-full items-center justify-center overflow-hidden p-3 sm:p-4"
+        }
+      >
         <motion.img
           src={src}
           alt={alt}
           className={
             lineCoverZoom != null
-              ? "h-full w-full object-cover object-center [filter:drop-shadow(0_16px_28px_rgba(0,0,0,0.14))]"
+              ? "h-full w-full object-cover [filter:drop-shadow(0_16px_28px_rgba(0,0,0,0.14))]"
               : "max-h-full max-w-full object-contain object-center [filter:drop-shadow(0_16px_28px_rgba(0,0,0,0.14))]"
           }
           style={
             lineCoverZoom != null
-              ? { transformOrigin: "center center" }
+              ? {
+                  transformOrigin: "center center",
+                  objectPosition: lineCoverObjectPosition,
+                }
               : undefined
           }
           initial={{ scale: baseScale }}

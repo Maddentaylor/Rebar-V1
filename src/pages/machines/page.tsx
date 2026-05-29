@@ -86,6 +86,10 @@ export default function MachinesPage() {
           >
             {machines.map((machine, i) => {
               const subCount = machine.subProducts?.length ?? 0;
+              const machineHref =
+                subCount === 1
+                  ? `/machines/${machine.id}/${machine.subProducts![0].id}`
+                  : `/machines/${machine.id}`;
               return (
                 <RevealItem key={machine.id} className="group">
                   <Tilt
@@ -94,12 +98,13 @@ export default function MachinesPage() {
                     glare
                     className="relative cursor-pointer overflow-hidden rounded-2xl border border-canvas-edge/70 bg-white shadow-soft transition-shadow duration-300 hover:border-canvas-edge hover:shadow-card"
                   >
-                    <Link to={`/machines/${machine.id}`} className="block">
+                    <Link to={machineHref} className="block">
                       <MachineCardMedia
                         src={machine.image}
                         alt={machine.name}
                         className="h-60 min-h-[15rem] w-full"
                         lineCoverZoom={machine.lineCardCoverZoom}
+                        lineCoverObjectPosition={machine.lineCardCoverObjectPosition}
                       >
                         <div className="absolute top-3 left-3 z-20 inline-flex items-center gap-2 rounded-full bg-black/40 px-2.5 py-1 backdrop-blur-md ring-1 ring-white/12">
                           <span className="h-1.5 w-1.5 rounded-full bg-brand-red"></span>
@@ -108,7 +113,7 @@ export default function MachinesPage() {
                           </span>
                         </div>
 
-                        {subCount > 0 && (
+                        {subCount > 1 && (
                           <div className="absolute top-3 right-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-brand-red px-2.5 py-1 text-white shadow-sm">
                             <i className="ri-stack-line text-[11px]"></i>
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{subCount} models</span>

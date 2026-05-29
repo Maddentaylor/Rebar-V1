@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, Navigate } from "react-router-dom";
 import Navbar from "@/components/feature/Navbar";
 import Footer from "@/components/feature/Footer";
 import { machines } from "@/mocks/machines";
@@ -26,6 +26,10 @@ export default function MachineDetailPage() {
 
   const subProducts = machine.subProducts ?? [];
   const hasSchilt = subProducts.some((s) => s.schilt);
+
+  if (subProducts.length === 1) {
+    return <Navigate to={`/machines/${machine.id}/${subProducts[0].id}`} replace />;
+  }
 
   return (
     <div className="bg-canvas min-h-screen overflow-x-hidden">
