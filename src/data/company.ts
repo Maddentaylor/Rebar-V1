@@ -4,7 +4,7 @@ export const COMPANY = {
   legalName: "Rebar Machine Service",
   displayName: "RMS · Rebar Machine Service",
   shortName: "RMS",
-  foundedYear: 1960,
+  foundedYear: 1986,
   /** Rough headcount band for About / SEO-style copy */
   employeeRange: "11–50",
   addressLines: ["5935 Emerald Ave.", "Las Vegas, NV 89122"] as const,

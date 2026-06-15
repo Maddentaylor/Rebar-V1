@@ -215,7 +215,7 @@ export default function ContactPage() {
                   <div className="flex justify-between items-center py-5">
                     <span className="text-ink text-lg font-bold leading-none tracking-tight">Mon – Fri</span>
                     <div className="text-right">
-                      <span className="text-ink font-semibold text-base block">7:00 am – 5:00 pm</span>
+                      <span className="text-ink font-semibold text-base block">6:30 am – 3:00 pm</span>
                       <span className="text-ink-subtle text-xs">Pacific Time</span>
                     </div>
                   </div>

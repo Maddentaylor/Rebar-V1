@@ -53,6 +53,30 @@ export interface Machine {
   lineCardCoverZoom?: number;
   /** With `lineCardCoverZoom`, CSS `object-position` for off-center compositions (e.g. `right center`). */
   lineCardCoverObjectPosition?: string;
+  /** `logo` = white field + contain (partner lockups). Default = photo staging. */
+  lineCardVariant?: "photo" | "logo";
+  /** Scales a `logo` card image up inside the frame (crops empty margins, keeps full lockup). */
+  lineCardLogoScale?: number;
+  /** Opens an external site instead of an in-app machine route (e.g. Schilt Engineering). */
+  externalUrl?: string;
+  /** Lineup / line detail: engineered by Schilt Engineering (Netherlands). */
+  schilt?: boolean;
+}
+
+export function isExternalMachineLine(machine: Machine): boolean {
+  return Boolean(machine.externalUrl);
+}
+
+export function isSchiltMachineLine(machine: Machine): boolean {
+  if (machine.schilt) return true;
+  return (machine.subProducts ?? []).some((s) => s.schilt);
+}
+
+export function getMachineLineupHref(machine: Machine): string {
+  if (machine.externalUrl) return machine.externalUrl;
+  const subs = machine.subProducts ?? [];
+  if (subs.length === 1) return `/machines/${machine.id}/${subs[0].id}`;
+  return `/machines/${machine.id}`;
 }
 
 export const machines: Machine[] = [
@@ -485,8 +509,8 @@ export const machines: Machine[] = [
     id: "rms-shearline",
     name: "RMS Shearline",
     shortDesc: "High-speed shear line for continuous straight bar processing",
-    image: "/machines/rms-shearline-cover.png",
-    lineCardCoverZoom: 1.09,
+    image: "/machines/rms-shearline-gallery-overview-top.png",
+    lineCardCoverZoom: 1.1,
     models: ["SL-40", "SL-60", "SL-80"],
     features: [
       "Processes bars up to 1-3/4\" diameter",
@@ -535,12 +559,16 @@ export const machines: Machine[] = [
         id: "rms-shearline",
         name: "RMS Shearline",
         shortDesc: "The result of many years of experience in rebar fabrication and equipment manufacturing — found in leading rebar fabricating shops ranging from minimal volume to some of the largest producers in the world",
-        image: "/machines/rms-shearline-hero.png",
+        image: "/machines/rms-shearline-gallery-overview-top.png",
         coverObjectFit: "cover",
         coverObjectPosition: "center center",
         coverCropZoom: 1.088,
         listingMediaTall: true,
         imageGallery: [
+          "/machines/rms-shearline-gallery-overview-top.png",
+          "/machines/rms-shearline-gallery-overview-floor.png",
+          "/machines/rms-shearline-gallery-pockets.png",
+          "/machines/rms-shearline-hero.png",
           "/machines/rms-shearline-gallery-01.png",
           "/machines/rms-shearline-gallery-02.png",
           "/machines/rms-shearline-gallery-03.png",
@@ -942,9 +970,10 @@ export const machines: Machine[] = [
   {
     id: "pile-cage",
     name: "Pile Cage Machines",
-    shortDesc: "SLP pile cage welding systems for foundation and infrastructure reinforcement",
+    schilt: true,
+    shortDesc: "Schilt-engineered SLP pile cage welding systems for foundation and infrastructure reinforcement",
     image: "/machines/slp-gallery-4.png",
-    lineCardCoverZoom: 1.12,
+    lineCardCoverZoom: 1.1,
     lineCardCoverObjectPosition: "right center",
     models: ["SLP-1200", "SLP-1500", "SLP-2000", "SLP-3000"],
     features: [
@@ -954,7 +983,7 @@ export const machines: Machine[] = [
       "Store up to 100 cage types in control memory",
       "Schilt-engineered SLP series",
     ],
-    description: "RMS Pile Cage Machines (SLP) are exceptionally robust welding systems built for harsh job-site conditions. Heavy-duty robots, solid frames, and intuitive controls produce consistent quality welds across a wide range of cage diameters and lengths.",
+    description: "Schilt Engineering SLP pile cage machines — sold, installed, and supported in North America by RMS. Exceptionally robust welding systems built for harsh job-site conditions with heavy-duty robots, solid frames, and intuitive controls.",
     subProducts: [
       {
         id: "pile-cage-machines",
@@ -1000,6 +1029,109 @@ export const machines: Machine[] = [
         },
       },
     ],
+  },
+  {
+    id: "rms-drag-chain",
+    name: "RMS Drag Train",
+    schilt: true,
+    shortDesc: "Schilt-engineered drag chain conveyor for loading and transferring rebar between processing stations",
+    image: "/machines/cc-gallery-1.jpg",
+    lineCardCoverZoom: 1.1,
+    lineCardCoverObjectPosition: "center center",
+    models: ["DCC-STD"],
+    features: [
+      "Maintenance-free drag chain design",
+      "Loads rebar onto DBS and bender tables",
+      "Transfers bar between gauge table and staging areas",
+      "Modular integration with bin pocket systems",
+    ],
+    description: "The RMS Drag Train is a robust, maintenance-free drag chain conveyor for moving rebar through your fabrication line. It loads bar onto double benders and bender tables, transfers stock between stations, and pairs with bin pocket magazines for flexible staging.",
+    subProducts: [
+      {
+        id: "rms-drag-chain",
+        name: "RMS Drag Train",
+        shortDesc: "Robust, maintenance-free drag chain conveyor system for loading and transferring rebar between processing stations",
+        image: "/machines/cc-gallery-1.jpg",
+        coverObjectFit: "cover",
+        coverObjectPosition: "center center",
+        coverCropZoom: 1.06,
+        imageGallery: [
+          "/machines/cc-gallery-1.jpg",
+          "/machines/cc-gallery-2.jpg",
+          "/machines/cc-gallery-3.jpg",
+        ],
+        galleryPresentation: "default",
+        features: [
+          "The robust maintenance-free drag chain conveyor is traditionally used to load rebar onto the DBS3-60N or RMS bender tables",
+          "The system allows transfer of rebar from the gauge table to another staging or fabrication area",
+          "Easily modifiable to work with a bin pocket system — stage express orders while keeping other production runs safely stowed until needed",
+        ],
+        specifications: [],
+        partsTypeId: "shearlines-standard",
+      },
+    ],
+  },
+  {
+    id: "rms-evacuator-pockets",
+    name: "RMS Evacuator Pockets",
+    schilt: true,
+    shortDesc: "Schilt-engineered bin pocket magazine to combine cut jobs and stage rebar for maximum shop floor efficiency",
+    image: "/machines/bpm-gallery-1.jpg",
+    lineCardCoverZoom: 1.1,
+    lineCardCoverObjectPosition: "center center",
+    models: ["BPM-STD"],
+    features: [
+      "Combine cut jobs for optimized production",
+      "Ramp and pocket staging for future processing",
+      "Wear-resistant steel bows rated to 134 lb/ft",
+      "Pairs with RMS Drag Train and double bender lines",
+    ],
+    description: "Schilt-engineered RMS Evacuator Pockets provide a robust bin pocket magazine for sorting and staging cut rebar — sold and supported by RMS across North America.",
+    subProducts: [
+      {
+        id: "rms-evacuator-pockets",
+        name: "RMS Evacuator Pockets",
+        shortDesc: "Schilt-engineered bin pocket magazine for combining cut jobs and maximum shop floor efficiency",
+        image: "/machines/bpm-gallery-1.jpg",
+        schilt: true,
+        coverObjectFit: "cover",
+        coverObjectPosition: "center center",
+        coverCropZoom: 1.06,
+        imageGallery: [
+          "/machines/bpm-gallery-1.jpg",
+          "/machines/bpm-gallery-2.jpg",
+          "/machines/bpm-gallery-3.jpg",
+        ],
+        galleryPresentation: "default",
+        features: [
+          "Robust, reliable bin pocket magazine system provides the ability to combine cut jobs",
+          "Rebar may slide down the ramp or into a pocket for future processing",
+          "Wear-resistant steel bows may be opened and closed and hold a maximum load of 134lb/ft [200kg/m]",
+          "Designed to work in conjunction with the drag chain conveyor system to provide a constant supply of bar to the DBS3-60N",
+          "May be unloaded onto a traditional bender table or another conveyor to move the cut bar to another shop location for further processing",
+        ],
+        specifications: [],
+        partsTypeId: "shearlines-standard",
+      },
+    ],
+  },
+  {
+    id: "schilt-automation",
+    name: "Schilt Automation",
+    shortDesc: "Complete rebar automation and production lines from Schilt Engineering — explore the full Schilt catalog",
+    image: "/partners/schilt-na-card.png",
+    lineCardVariant: "logo",
+    lineCardLogoScale: 1.0,
+    externalUrl: "https://www.schiltbv.nl/",
+    models: [],
+    features: [
+      "Full production line integration",
+      "In-house engineering and manufacturing",
+      "Advanced automation for steel processing",
+      "Global steel industry solutions",
+    ],
+    description:
+      "Schilt Engineering BV designs and builds complete automated rebar and concrete steel processing lines. Visit Schilt's website for automation systems, engineering capabilities, and equipment beyond the RMS North American lineup.",
   },
 ];
 

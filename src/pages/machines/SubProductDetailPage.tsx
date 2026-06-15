@@ -6,97 +6,9 @@ import Footer from "@/components/feature/Footer";
 import { machines } from "@/mocks/machines";
 import type { CapacityTable, Machine, SubProduct } from "@/mocks/machines";
 import { SCHILT_PARTNER_ABOUT_ROUTE } from "@/data/company";
-import { parts } from "@/mocks/parts";
-import type { PartItem } from "@/mocks/parts";
 import Reveal, { Stagger, RevealItem } from "@/components/motion/Reveal";
 import Magnetic from "@/components/motion/Magnetic";
 import SubProductImageGallery from "@/components/machines/SubProductImageGallery";
-import CatalogQuoteAddControls from "@/components/parts/CatalogQuoteAddControls";
-
-function PartsTableSection({ partsList, machineName }: { partsList: PartItem[]; machineName: string }) {
-  if (partsList.length === 0) return null;
-
-  const grouped = partsList.reduce<Record<string, PartItem[]>>((acc, part) => {
-    const cat = part.category || "General";
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(part);
-    return acc;
-  }, {});
-
-  const categories = Object.keys(grouped).sort();
-
-  return (
-    <div className="mt-16">
-      <Reveal>
-        <div className="inline-flex items-center gap-3 mb-6">
-          <span className="w-8 h-px bg-brand-red"></span>
-          <span className="text-brand-red text-[11px] font-bold uppercase tracking-[0.4em]">
-            Parts &amp; Accessories · {partsList.length}
-          </span>
-        </div>
-      </Reveal>
-
-      <div className="flex flex-col gap-10">
-        {categories.map((cat) => (
-          <Reveal key={cat}>
-            <div>
-              <p className="text-ink text-sm font-black uppercase tracking-[0.25em] mb-3">{cat}</p>
-              <div className="overflow-x-auto rounded-2xl border border-canvas-edge shadow-card bg-canvas-raised">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-ink-deep">
-                      <th className="px-4 py-3 text-left font-bold uppercase tracking-[0.25em] text-[10px] text-white/40 w-24">Image</th>
-                      <th className="px-4 py-3 text-left font-bold uppercase tracking-[0.25em] text-[10px] text-brand-red">Part #</th>
-                      <th className="px-4 py-3 text-left font-bold uppercase tracking-[0.25em] text-[10px] text-white/40">Description</th>
-                      <th className="px-4 py-3 text-left font-bold uppercase tracking-[0.25em] text-[10px] text-brand-red w-[min(11rem,calc(100vw-220px))]">
-                        Quote
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {grouped[cat].map((part, ri) => (
-                      <tr key={part.id} className={ri % 2 === 0 ? "bg-canvas-raised" : "bg-canvas/60"}>
-                        <td className="px-4 py-3">
-                          <div className="w-16 h-16 bg-canvas border border-canvas-edge rounded-md overflow-hidden flex items-center justify-center">
-                            <img src={part.image} alt={part.name} className="w-full h-full object-contain" />
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 align-top">
-                          <span className="text-brand-red text-xs font-bold font-mono whitespace-nowrap">{part.partNumber}</span>
-                        </td>
-                        <td className="px-4 py-3 align-top">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-ink text-sm font-semibold">{part.name}</span>
-                            {part.description && (
-                              <span className="text-ink-muted text-xs leading-relaxed">{part.description}</span>
-                            )}
-                            <span className="text-ink-subtle text-[10px] mt-0.5 uppercase tracking-[0.2em]">{machineName}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 align-top border-l border-canvas-edge">
-                          <CatalogQuoteAddControls part={part} compact />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </Reveal>
-        ))}
-      </div>
-      <div className="mt-5 flex items-center gap-3">
-        <Link
-          to="/parts"
-          className="inline-flex items-center gap-2 text-brand-red text-[11px] font-bold uppercase tracking-[0.3em] hover:text-brand-glow transition-colors cursor-pointer group"
-        >
-          <span>View Full Parts Catalog</span>
-          <i className="ri-arrow-right-line text-sm transition-transform duration-300 group-hover:translate-x-0.5"></i>
-        </Link>
-      </div>
-    </div>
-  );
-}
 
 function ProductYoutubeEmbed({ videoId, label }: { videoId: string; label: string }) {
   const title = `${label} — product overview video`;
@@ -177,12 +89,10 @@ function SubProductDetailMainBody({
   machine,
   sub,
   galleryMode,
-  relatedParts,
 }: {
   machine: Machine;
   sub: SubProduct;
   galleryMode: boolean;
-  relatedParts: PartItem[];
 }) {
   return (
     <div
@@ -248,10 +158,6 @@ function SubProductDetailMainBody({
         )}
 
         {sub.capacityTable && <CapacityTableSection table={sub.capacityTable} />}
-
-        {relatedParts.length > 0 && (
-          <PartsTableSection partsList={relatedParts} machineName={machine.name} />
-        )}
       </div>
 
       {/* Sidebar — compact when gallery headline already sells the model */}
@@ -404,10 +310,6 @@ export default function SubProductDetailPage() {
   const heroScale = useTransform(scrollYProgress, [0, 1], [1.05, 1.18]);
   const heroFg = useTransform(scrollYProgress, [0, 1], ["0%", "-10%"]);
 
-  const relatedParts = sub?.partsTypeId
-    ? parts.filter((p) => p.partsTypeId === sub.partsTypeId)
-    : [];
-
   if (!machine || !sub) {
     return (
       <div className="bg-canvas min-h-screen flex items-center justify-center">
@@ -556,7 +458,6 @@ export default function SubProductDetailPage() {
           <SubProductDetailMainBody
             galleryMode={galleryMode}
             machine={machine}
-            relatedParts={relatedParts}
             sub={sub}
           />
         </div>
@@ -781,7 +682,6 @@ export default function SubProductDetailPage() {
           <SubProductDetailMainBody
             galleryMode={galleryMode}
             machine={machine}
-            relatedParts={relatedParts}
             sub={sub}
           />
         </>

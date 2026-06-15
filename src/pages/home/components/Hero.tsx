@@ -155,9 +155,8 @@ export default function Hero() {
             <ul className="flex items-center gap-3 md:gap-5 overflow-hidden">
               {[
                 { v: `Est. ${COMPANY.foundedYear}`, l: "Las Vegas, NV" },
-                { v: "8",              l: "Machine Lines"    },
+                { v: "20+",            l: "Machines"         },
                 { v: "500+",           l: "Parts in Stock"   },
-                { v: "48 hr",          l: "Parts Shipping"   },
               ].map((s, i, arr) => (
                 <li key={s.l} className="flex items-center gap-3 md:gap-5 shrink-0">
                   <div className="flex items-baseline gap-1.5">

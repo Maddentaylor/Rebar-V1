@@ -21,6 +21,9 @@ const equipmentLinks = [
   { label: "RMS Controller",      path: "/machines/rms-controller"        },
   { label: "RMS Lifting",         path: "/machines/rms-lifting"           },
   { label: "Pile Cage Machines",  path: "/machines/pile-cage/pile-cage-machines" },
+  { label: "RMS Drag Train",         path: "/machines/rms-drag-chain/rms-drag-chain" },
+  { label: "RMS Evacuator Pockets",  path: "/machines/rms-evacuator-pockets/rms-evacuator-pockets" },
+  { label: "Schilt Automation",      path: "https://www.schiltbv.nl/", external: true },
 ];
 
 export default function Footer() {
@@ -91,9 +94,20 @@ export default function Footer() {
             <ul className="grid grid-cols-1 gap-3">
               {equipmentLinks.map((link) => (
                 <li key={link.path}>
-                  <Link to={link.path} className="text-white/70 hover:text-white text-sm transition-colors cursor-pointer">
-                    {link.label}
-                  </Link>
+                  {"external" in link && link.external ? (
+                    <a
+                      href={link.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white/70 hover:text-white text-sm transition-colors cursor-pointer"
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link to={link.path} className="text-white/70 hover:text-white text-sm transition-colors cursor-pointer">
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -128,7 +142,7 @@ export default function Footer() {
                   <i className="ri-time-line text-brand-red text-base"></i>
                 </span>
                 <span className="text-white/75 text-sm leading-relaxed">
-                  Mon – Fri · 7:00a – 5:00p PT<br />
+                  Mon – Fri · 6:30a – 3:00p PT<br />
                   <span className="text-white/40 text-xs">Saturday by appointment</span>
                 </span>
               </li>

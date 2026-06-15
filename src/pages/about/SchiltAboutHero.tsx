@@ -21,6 +21,8 @@ const A = {
 const schiltProducts = [
   { id: "dbs3-60n", parent: "automation", label: "DBS3-60N RMS Double Bender" },
   { id: "pile-cage-machines", parent: "pile-cage", label: "SLP Pile Cage Machines" },
+  { id: "rms-drag-chain", parent: "rms-drag-chain", label: "RMS Drag Train" },
+  { id: "rms-evacuator-pockets", parent: "rms-evacuator-pockets", label: "RMS Evacuator Pockets" },
   { id: "sbr60", parent: "rms-radius", label: "SBR Radius Bender (Schilt SBR60)" },
 ];
 

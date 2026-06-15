@@ -24,7 +24,7 @@ const points = [
     number: "03",
     title: "Parts When You Need Them",
     body: "We stock hundreds of genuine parts and ship fast. Most orders leave our Las Vegas warehouse within 24 hours so your operation stays running.",
-    accent: "48-hour delivery target",
+    accent: "Fast parts turnaround",
   },
 ];
 

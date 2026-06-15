@@ -9,7 +9,6 @@ import {
   useTransform,
   useReducedMotion,
 } from "framer-motion";
-import { machines } from "@/mocks/machines";
 import Reveal from "@/components/motion/Reveal";
 import { SCHILT_PARTNER_ABOUT_ROUTE, COMPANY, companyOperatingYears } from "@/data/company";
 
@@ -92,12 +91,11 @@ export default function WhoWeAre() {
 
           {/* Stats */}
           <Reveal delay={0.25}>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 pt-8 border-t border-canvas-edge">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 pt-8 border-t border-canvas-edge">
               {[
                 { to: yearsOp,              suffix: "+",  label: "Years in Business" },
-                { to: machines.length, suffix: "",   label: "Machine Lines" },
+                { to: 20,              suffix: "+",  label: "Machines" },
                 { to: 500,             suffix: "+",  label: "Parts in Stock" },
-                { to: 48,              suffix: "hr", label: "Parts Delivery" },
               ].map((s) => (
                 <div key={s.label} className="flex flex-col">
                   <span

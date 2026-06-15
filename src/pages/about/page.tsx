@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import Navbar from "@/components/feature/Navbar";
 import Footer from "@/components/feature/Footer";
-import { machines } from "@/mocks/machines";
 import Reveal, { Stagger, RevealItem } from "@/components/motion/Reveal";
 import Tilt from "@/components/motion/Tilt";
 import Magnetic from "@/components/motion/Magnetic";
@@ -64,7 +63,7 @@ export default function AboutPage() {
           </Reveal>
           <Reveal delay={0.15}>
             <p className="text-ink-muted text-base md:text-lg max-w-xl mt-6">
-              More than six decades supplying, servicing, and supporting the machines that keep rebar fabrication shops running across North America.
+              Nearly four decades supplying, servicing, and supporting the machines that keep rebar fabrication shops running across North America.
             </p>
           </Reveal>
 
@@ -73,7 +72,7 @@ export default function AboutPage() {
               {[
                 { fig: `${yearsOp}+`, sub: "Years serving shops", icon: "ri-timer-flash-line" },
                 { fig: "Las Vegas", sub: "Parts & ops hub", icon: "ri-map-pin-line" },
-                { fig: `${machines.length}`, sub: "Machine lines", icon: "ri-building-2-line" },
+                { fig: "20+", sub: "Machines", icon: "ri-building-2-line" },
               ].map((item) => (
                 <div
                   key={item.sub}
@@ -237,12 +236,11 @@ export default function AboutPage() {
             </Reveal>
           </div>
 
-          <Stagger stagger={0.08} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Stagger stagger={0.08} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[
               { value: `${yearsOp}+`, label: "Years in Business", tag: `Est. ${COMPANY.foundedYear}` },
-              { value: `${machines.length}`, label: "Machine Lines",     tag: "Catalog depth" },
+              { value: "20+",                label: "Machines",          tag: "Catalog depth" },
               { value: "500+",               label: "Parts in Stock",    tag: "Ready to ship" },
-              { value: "48hr",               label: "Typical dispatch",  tag: "Parts turnaround" },
             ].map((stat, i) => (
               <RevealItem key={stat.label}>
                 <div className="relative h-full overflow-hidden rounded-2xl border-2 border-canvas-edge bg-ink-deep p-6 text-white shadow-card ring-1 ring-black/5 transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-xl md:p-7">

@@ -14,7 +14,7 @@ export default function SchiltWordmark({ className = "", elevateOnBlue = false }
   return (
     <img
       src={SCHILT_LOCKUP_SRC}
-      alt="Schilt Engineering"
+      alt="Schilt Engineering North America"
       className={
         `max-h-none w-auto object-contain object-left ` +
         (elevateOnBlue

@@ -39,11 +39,11 @@ const routes: RouteObject[] = [
   },
   {
     path: "/machines/automation/bin-pocket-magazine",
-    element: <Navigate to="/machines/automation/dbs3-60n" replace />,
+    element: <Navigate to="/machines/rms-evacuator-pockets/rms-evacuator-pockets" replace />,
   },
   {
     path: "/machines/automation/chain-conveyor",
-    element: <Navigate to="/machines/automation/dbs3-60n" replace />,
+    element: <Navigate to="/machines/rms-drag-chain/rms-drag-chain" replace />,
   },
   {
     path: "/machines/automation/pile-cage-machines",
