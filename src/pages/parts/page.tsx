@@ -14,8 +14,11 @@ import {
 } from "@/mocks/parts";
 import { IndustrialFilterSelect } from "./IndustrialFilterSelect";
 import CatalogQuoteAddControls from "@/components/parts/CatalogQuoteAddControls";
+import { useCustomParts } from "@/lib/customParts";
 
 export default function PartsPage() {
+  const customParts = useCustomParts();
+  const allParts: PartItem[] = [...customParts, ...parts];
   const [selectedMachineType, setSelectedMachineType] = useState<string>("");
   const [selectedPartsType, setSelectedPartsType] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -40,10 +43,17 @@ export default function PartsPage() {
   );
 
   const availableCategories: string[] = selectedPartsType
-    ? partCategories[selectedPartsType] ?? []
+    ? Array.from(
+        new Set([
+          ...(partCategories[selectedPartsType] ?? []),
+          ...customParts
+            .filter((p) => p.partsTypeId === selectedPartsType)
+            .map((p) => p.category),
+        ])
+      )
     : [];
 
-  const filteredParts = parts.filter((p) => {
+  const filteredParts = allParts.filter((p) => {
     if (!selectedPartsType) return false;
     if (p.partsTypeId !== selectedPartsType) return false;
     if (selectedCategory && p.category !== selectedCategory) return false;

@@ -7,6 +7,7 @@ import SubProductDetailPage from "../pages/machines/SubProductDetailPage";
 import PartsPage from "../pages/parts/page";
 import AboutPage from "../pages/about/page";
 import ContactPage from "../pages/contact/page";
+import AdminPage from "../pages/admin/page";
 
 const routes: RouteObject[] = [
   {
@@ -68,6 +69,10 @@ const routes: RouteObject[] = [
   {
     path: "/contact",
     element: <ContactPage />,
+  },
+  {
+    path: "/admin",
+    element: <AdminPage />,
   },
   {
     path: "*",
