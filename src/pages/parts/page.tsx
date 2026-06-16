@@ -17,7 +17,7 @@ import CatalogQuoteAddControls from "@/components/parts/CatalogQuoteAddControls"
 import { useCustomParts } from "@/lib/customParts";
 
 export default function PartsPage() {
-  const customParts = useCustomParts();
+  const { parts: customParts } = useCustomParts();
   const allParts: PartItem[] = [...customParts, ...parts];
   const [selectedMachineType, setSelectedMachineType] = useState<string>("");
   const [selectedPartsType, setSelectedPartsType] = useState<string>("");

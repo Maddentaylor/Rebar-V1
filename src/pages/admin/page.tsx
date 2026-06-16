@@ -22,14 +22,19 @@ const PLACEHOLDER_IMAGE =
     `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#e1e4ea"/><g fill="#9aa0ab" font-family="sans-serif" font-size="22" text-anchor="middle"><text x="200" y="210">No photo</text></g></svg>`
   );
 
-function LoginScreen({ onLogin }: { onLogin: (u: string, p: string) => boolean }) {
+function LoginScreen({ onLogin }: { onLogin: (u: string, p: string) => Promise<boolean> }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!onLogin(username, password)) {
+    setBusy(true);
+    setError("");
+    const ok = await onLogin(username, password);
+    setBusy(false);
+    if (!ok) {
       setError("Incorrect username or password.");
       setPassword("");
     }
@@ -82,9 +87,10 @@ function LoginScreen({ onLogin }: { onLogin: (u: string, p: string) => boolean }
 
         <button
           type="submit"
-          className="mt-4 w-full rounded-full bg-brand-red px-6 py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-colors hover:bg-brand-ruby"
+          disabled={busy}
+          className="mt-4 w-full rounded-full bg-brand-red px-6 py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-colors hover:bg-brand-ruby disabled:opacity-50"
         >
-          Enter
+          {busy ? "Signing in…" : "Enter"}
         </button>
 
         <Link
@@ -110,6 +116,7 @@ function AddPartForm() {
   const [imageBusy, setImageBusy] = useState(false);
   const [error, setError] = useState("");
   const [savedMsg, setSavedMsg] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const availablePartsTypes = useMemo(
     () => partsTypeOptions.filter((pt) => pt.machineTypeId === machineTypeId),
@@ -146,7 +153,7 @@ function AddPartForm() {
     }
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSavedMsg("");
@@ -164,9 +171,10 @@ function AddPartForm() {
       return;
     }
 
+    setSaving(true);
     try {
-      addCustomPart({
-        id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      await addCustomPart({
+        id: `custom-${Date.now()}`,
         name: name.trim(),
         partNumber: partNumber.trim(),
         partsTypeId,
@@ -174,12 +182,14 @@ function AddPartForm() {
         image: imageDataUrl || PLACEHOLDER_IMAGE,
         description: description.trim() || undefined,
       });
-      setSavedMsg(`Saved "${name.trim()}" — it now appears under ${machineLabel} › ${partsTypeLabel} › ${resolvedCategory}.`);
-      reset();
-    } catch {
-      setError(
-        "Could not save — browser storage may be full. Try a smaller image, or remove some parts."
+      setSavedMsg(
+        `Saved "${name.trim()}" — it now appears on the live Parts catalog under ${machineLabel} › ${partsTypeLabel} › ${resolvedCategory}.`
       );
+      reset();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save part.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -322,10 +332,10 @@ function AddPartForm() {
       <div className="mt-6 flex items-center gap-4">
         <button
           type="submit"
-          disabled={imageBusy}
+          disabled={imageBusy || saving}
           className="rounded-full bg-brand-red px-7 py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-colors hover:bg-brand-ruby disabled:opacity-50"
         >
-          Save part
+          {saving ? "Saving…" : "Save part"}
         </button>
         <button
           type="button"
@@ -340,7 +350,26 @@ function AddPartForm() {
 }
 
 function CustomPartsList() {
-  const customParts = useCustomParts();
+  const { parts: customParts, loading, error } = useCustomParts();
+
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-dashed border-canvas-edge bg-white/60 p-8 text-center">
+        <p className="text-sm text-ink-muted">Loading uploaded parts…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-brand-red/30 bg-brand-red/5 p-6">
+        <p className="text-sm font-medium text-brand-red">{error}</p>
+        <p className="mt-2 text-xs text-ink-muted">
+          Make sure Postgres and Blob storage are connected in Vercel, then redeploy.
+        </p>
+      </div>
+    );
+  }
 
   if (customParts.length === 0) {
     return (
@@ -375,8 +404,13 @@ function CustomPartsList() {
           </div>
           <button
             type="button"
-            onClick={() => {
-              if (window.confirm(`Delete "${part.name}"?`)) deleteCustomPart(part.id);
+            onClick={async () => {
+              if (!window.confirm(`Delete "${part.name}"?`)) return;
+              try {
+                await deleteCustomPart(part.id);
+              } catch (err) {
+                window.alert(err instanceof Error ? err.message : "Could not delete part.");
+              }
             }}
             className="shrink-0 rounded-full border border-canvas-edge px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-ink-subtle transition-colors hover:border-brand-red/50 hover:text-brand-red"
           >
@@ -431,7 +465,7 @@ export default function AdminPage() {
         <p className="mb-8 max-w-2xl text-sm text-ink-muted">
           Add replacement parts to the catalog. Choose exactly where each part appears
           (machine type, model, and category), upload a photo, and it shows up on the
-          Parts page immediately.
+          live Parts page for all visitors.
         </p>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_22rem]">

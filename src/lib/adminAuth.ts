@@ -1,45 +1,34 @@
 import { useEffect, useState } from "react";
-
-/**
- * Simple admin authentication.
- *
- * SECURITY NOTE: This runs entirely in the browser, so the accounts below are
- * visible to anyone who inspects the site's JavaScript. It is a convenience gate
- * to keep the admin UI out of casual view — it is NOT real security. Before using
- * this to protect anything sensitive, move the check to a server endpoint
- * (e.g. an /api/admin/login Vercel function validating a hashed password and
- * issuing an httpOnly session cookie). See notes in src/pages/admin/page.tsx.
- *
- * To change/add accounts, edit ADMIN_ACCOUNTS below, or set VITE_ADMIN_PASSWORD
- * in your environment to override the default admin password at build time.
- */
-
-export interface AdminAccount {
-  username: string;
-  password: string;
-}
-
-export const ADMIN_ACCOUNTS: AdminAccount[] = [
-  {
-    username: "admin",
-    password: import.meta.env.VITE_ADMIN_PASSWORD || "rms-admin",
-  },
-];
+import { apiUrl, authHeaders } from "@/lib/apiClient";
 
 const SESSION_KEY = "rms_admin_user";
+const TOKEN_KEY = "rms_admin_token";
 const CHANGE_EVENT = "rms-admin-auth-changed";
 
-export function login(username: string, password: string): boolean {
-  const match = ADMIN_ACCOUNTS.find(
-    (a) => a.username.toLowerCase() === username.trim().toLowerCase() && a.password === password
-  );
-  if (!match) return false;
-  window.sessionStorage.setItem(SESSION_KEY, match.username);
-  window.dispatchEvent(new Event(CHANGE_EVENT));
-  return true;
+export async function login(username: string, password: string): Promise<boolean> {
+  try {
+    const res = await fetch(apiUrl("/api/admin/login"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!res.ok) return false;
+
+    const data = (await res.json()) as { token?: string; username?: string };
+    if (!data.token || !data.username) return false;
+
+    window.sessionStorage.setItem(TOKEN_KEY, data.token);
+    window.sessionStorage.setItem(SESSION_KEY, data.username);
+    window.dispatchEvent(new Event(CHANGE_EVENT));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function logout(): void {
+  window.sessionStorage.removeItem(TOKEN_KEY);
   window.sessionStorage.removeItem(SESSION_KEY);
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
@@ -49,10 +38,9 @@ export function getCurrentAdmin(): string | null {
   return window.sessionStorage.getItem(SESSION_KEY);
 }
 
-/** React hook exposing the current admin user and reacting to login/logout. */
 export function useAdminAuth(): {
   user: string | null;
-  login: (u: string, p: string) => boolean;
+  login: (u: string, p: string) => Promise<boolean>;
   logout: () => void;
 } {
   const [user, setUser] = useState<string | null>(() => getCurrentAdmin());
@@ -69,3 +57,6 @@ export function useAdminAuth(): {
 
   return { user, login, logout };
 }
+
+/** For authenticated admin API calls. */
+export { authHeaders };

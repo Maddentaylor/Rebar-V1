@@ -1,81 +1,114 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { PartItem } from "@/mocks/parts";
+import { apiUrl, authHeaders } from "@/lib/apiClient";
 
-/**
- * Admin-added parts.
- *
- * NOTE: This is a client-side store backed by the browser's localStorage. It lets
- * an admin add parts (with an uploaded image) that appear instantly on the Parts
- * catalog — without a redeploy. Because it lives in the browser, parts added here
- * are visible only in the browser/device they were created in. To make uploads
- * permanent and shared across all visitors, swap this store for API calls backed
- * by a database + blob storage (see notes in src/pages/admin/page.tsx).
- */
-
-const STORAGE_KEY = "rms_custom_parts_v1";
 const CHANGE_EVENT = "rms-custom-parts-changed";
 
 export interface CustomPart extends PartItem {
-  /** Epoch ms — used for sorting newest-first in the admin list. */
   createdAt: number;
 }
 
-function safeRead(): CustomPart[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (p): p is CustomPart =>
-        p && typeof p.id === "string" && typeof p.partsTypeId === "string"
-    );
-  } catch {
-    return [];
-  }
-}
-
-function safeWrite(list: CustomPart[]): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+function notifyChange(): void {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-export function getCustomParts(): CustomPart[] {
-  return safeRead().sort((a, b) => b.createdAt - a.createdAt);
+export async function fetchCustomParts(): Promise<CustomPart[]> {
+  const res = await fetch(apiUrl("/api/custom-parts"));
+  if (!res.ok) {
+    throw new Error("Could not load uploaded parts.");
+  }
+  const data = (await res.json()) as { parts?: CustomPart[] };
+  return Array.isArray(data.parts) ? data.parts : [];
 }
 
-export function addCustomPart(part: Omit<CustomPart, "createdAt">): void {
-  const list = safeRead();
-  list.push({ ...part, createdAt: Date.now() });
-  safeWrite(list);
+export async function addCustomPart(
+  part: Omit<CustomPart, "createdAt">
+): Promise<CustomPart> {
+  const res = await fetch(apiUrl("/api/custom-parts"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({
+      name: part.name,
+      partNumber: part.partNumber,
+      partsTypeId: part.partsTypeId,
+      category: part.category,
+      image: part.image,
+      description: part.description,
+    }),
+  });
+
+  if (res.status === 401) {
+    throw new Error("Session expired. Sign in again.");
+  }
+
+  const data = (await res.json()) as { part?: CustomPart; error?: string };
+  if (!res.ok) {
+    throw new Error(data.error ?? "Could not save part.");
+  }
+  if (!data.part) {
+    throw new Error("Could not save part.");
+  }
+
+  notifyChange();
+  return data.part;
 }
 
-export function deleteCustomPart(id: string): void {
-  safeWrite(safeRead().filter((p) => p.id !== id));
+export async function deleteCustomPart(id: string): Promise<void> {
+  const res = await fetch(apiUrl(`/api/custom-parts?id=${encodeURIComponent(id)}`), {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+
+  if (res.status === 401) {
+    throw new Error("Session expired. Sign in again.");
+  }
+
+  if (!res.ok) {
+    const data = (await res.json()) as { error?: string };
+    throw new Error(data.error ?? "Could not delete part.");
+  }
+
+  notifyChange();
 }
 
-/** React hook that stays in sync with the store across tabs and components. */
-export function useCustomParts(): CustomPart[] {
-  const [items, setItems] = useState<CustomPart[]>(() => getCustomParts());
+export function useCustomParts(): {
+  parts: CustomPart[];
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+} {
+  const [parts, setParts] = useState<CustomPart[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const refresh = () => setItems(getCustomParts());
-    window.addEventListener(CHANGE_EVENT, refresh);
-    window.addEventListener("storage", refresh);
-    return () => {
-      window.removeEventListener(CHANGE_EVENT, refresh);
-      window.removeEventListener("storage", refresh);
-    };
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setParts(await fetchCustomParts());
+    } catch (err) {
+      setParts([]);
+      setError(err instanceof Error ? err.message : "Could not load parts.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return items;
+  useEffect(() => {
+    void load();
+    const onChange = () => void load();
+    window.addEventListener(CHANGE_EVENT, onChange);
+    return () => window.removeEventListener(CHANGE_EVENT, onChange);
+  }, [load]);
+
+  return { parts, loading, error, refresh: load };
 }
 
 /**
- * Downscale + compress an uploaded image to a data URL so it fits comfortably in
- * localStorage (which is ~5MB total). Returns a JPEG/PNG data URL string.
+ * Downscale + compress an uploaded image before sending to the server.
  */
 export function fileToCompressedDataUrl(
   file: File,
@@ -101,7 +134,6 @@ export function fileToCompressedDataUrl(
           return;
         }
         ctx.drawImage(img, 0, 0, w, h);
-        // PNG keeps transparency; everything else compresses to JPEG.
         const isPng = file.type === "image/png";
         resolve(canvas.toDataURL(isPng ? "image/png" : "image/jpeg", quality));
       };
