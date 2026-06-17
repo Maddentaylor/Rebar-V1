@@ -1,4 +1,7 @@
 import { neon } from "@neondatabase/serverless";
+import { getDefaultAdminPassword } from "./auth";
+
+const ADMIN_PASSWORD_KEY = "admin_password";
 
 export type DbCustomPart = {
   id: string;
@@ -48,6 +51,12 @@ export function ensureSchema(): Promise<void> {
           created_at BIGINT NOT NULL
         )
       `;
+      await sql`
+        CREATE TABLE IF NOT EXISTS admin_settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL
+        )
+      `;
     })();
   }
   return schemaReady;
@@ -79,6 +88,28 @@ export async function insertCustomPart(part: DbCustomPart): Promise<void> {
       ${part.description},
       ${part.created_at}
     )
+  `;
+}
+
+export async function getAdminPassword(): Promise<string> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = await sql`
+    SELECT value FROM admin_settings WHERE key = ${ADMIN_PASSWORD_KEY} LIMIT 1
+  `;
+  const stored = rows[0]?.value;
+  return typeof stored === "string" && stored.length > 0
+    ? stored
+    : getDefaultAdminPassword();
+}
+
+export async function setAdminPassword(password: string): Promise<void> {
+  await ensureSchema();
+  const sql = getSql();
+  await sql`
+    INSERT INTO admin_settings (key, value)
+    VALUES (${ADMIN_PASSWORD_KEY}, ${password})
+    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
   `;
 }
 

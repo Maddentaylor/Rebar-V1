@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createAdminToken, getAdminCredentials } from "../../server/auth";
+import { createAdminToken, getAdminUsername } from "../../server/auth";
+import { getAdminPassword } from "../../server/db";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -22,16 +23,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: "Username and password are required." });
     }
 
-    const creds = getAdminCredentials();
+    const expectedUser = getAdminUsername();
+    const expectedPassword = await getAdminPassword();
+
     if (
-      username.toLowerCase() !== creds.username.toLowerCase() ||
-      password !== creds.password
+      username.toLowerCase() !== expectedUser.toLowerCase() ||
+      password !== expectedPassword
     ) {
       return res.status(401).json({ error: "Incorrect username or password." });
     }
 
-    const token = createAdminToken(creds.username);
-    return res.status(200).json({ token, username: creds.username });
+    const token = createAdminToken(expectedUser);
+    return res.status(200).json({ token, username: expectedUser });
   } catch (err) {
     console.error("admin/login error:", err);
     return res.status(500).json({ error: "Login failed." });

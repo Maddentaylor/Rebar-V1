@@ -5,7 +5,7 @@ import {
   partsTypeOptions,
   partCategories,
 } from "@/mocks/parts";
-import { useAdminAuth } from "@/lib/adminAuth";
+import { useAdminAuth, changePassword } from "@/lib/adminAuth";
 import {
   addCustomPart,
   deleteCustomPart,
@@ -21,6 +21,41 @@ const PLACEHOLDER_IMAGE =
   encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#e1e4ea"/><g fill="#9aa0ab" font-family="sans-serif" font-size="22" text-anchor="middle"><text x="200" y="210">No photo</text></g></svg>`
   );
+
+function PasswordInput({
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  autoComplete?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className="relative">
+      <input
+        type={visible ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className="w-full rounded-lg border border-canvas-edge bg-canvas py-2.5 pl-4 pr-11 text-ink outline-none focus:border-brand-red"
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-bold uppercase tracking-[0.12em] text-ink-subtle transition-colors hover:text-ink"
+        aria-label={visible ? "Hide password" : "Show password"}
+      >
+        {visible ? "Hide" : "Show"}
+      </button>
+    </div>
+  );
+}
 
 function LoginScreen({ onLogin }: { onLogin: (u: string, p: string) => Promise<boolean> }) {
   const [username, setUsername] = useState("");
@@ -75,13 +110,13 @@ function LoginScreen({ onLogin }: { onLogin: (u: string, p: string) => Promise<b
         <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.25em] text-ink-subtle">
           Password
         </label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mb-2 w-full rounded-lg border border-canvas-edge bg-canvas px-4 py-2.5 text-ink outline-none focus:border-brand-red"
-          autoComplete="current-password"
-        />
+        <div className="mb-2">
+          <PasswordInput
+            value={password}
+            onChange={setPassword}
+            autoComplete="current-password"
+          />
+        </div>
 
         {error && <p className="mb-3 text-sm font-medium text-brand-red">{error}</p>}
 
@@ -349,6 +384,98 @@ function AddPartForm() {
   );
 }
 
+function ChangePasswordForm() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (newPassword !== confirmPassword) {
+      setError("New passwords do not match.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      setSuccess("Password updated.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update password.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const labelClass =
+    "mb-1.5 block text-[10px] font-bold uppercase tracking-[0.25em] text-ink-subtle";
+
+  return (
+    <form
+      onSubmit={submit}
+      className="rounded-2xl border border-canvas-edge bg-white p-5 shadow-card"
+    >
+      <h2 className="mb-1 text-sm font-black uppercase tracking-[0.2em] text-ink">
+        Change password
+      </h2>
+      <p className="mb-4 text-xs text-ink-muted">
+        Use Show to view what you type. Saves to the live admin account.
+      </p>
+
+      <div className="space-y-4">
+        <div>
+          <label className={labelClass}>Current password</label>
+          <PasswordInput
+            value={currentPassword}
+            onChange={setCurrentPassword}
+            autoComplete="current-password"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>New password</label>
+          <PasswordInput
+            value={newPassword}
+            onChange={setNewPassword}
+            autoComplete="new-password"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Confirm new password</label>
+          <PasswordInput
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+            autoComplete="new-password"
+          />
+        </div>
+      </div>
+
+      {error && <p className="mt-4 text-sm font-medium text-brand-red">{error}</p>}
+      {success && (
+        <p className="mt-4 rounded-lg bg-[#2e7d32]/10 px-3 py-2 text-sm font-medium text-[#2e7d32]">
+          {success}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={busy}
+        className="mt-4 w-full rounded-full border border-canvas-edge px-4 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-ink transition-colors hover:border-brand-red/50 hover:text-brand-red disabled:opacity-50"
+      >
+        {busy ? "Updating…" : "Update password"}
+      </button>
+    </form>
+  );
+}
+
 function CustomPartsList() {
   const { parts: customParts, loading, error } = useCustomParts();
 
@@ -470,7 +597,10 @@ export default function AdminPage() {
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_22rem]">
           <AddPartForm />
-          <CustomPartsList />
+          <div className="space-y-6">
+            <CustomPartsList />
+            <ChangePasswordForm />
+          </div>
         </div>
       </main>
     </div>

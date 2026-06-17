@@ -58,5 +58,29 @@ export function useAdminAuth(): {
   return { user, login, logout };
 }
 
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  const res = await fetch(apiUrl("/api/admin/change-password"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+
+  if (res.status === 401) {
+    const data = (await res.json()) as { error?: string };
+    throw new Error(data.error ?? "Current password is incorrect.");
+  }
+
+  const data = (await res.json()) as { error?: string };
+  if (!res.ok) {
+    throw new Error(data.error ?? "Could not update password.");
+  }
+}
+
 /** For authenticated admin API calls. */
 export { authHeaders };

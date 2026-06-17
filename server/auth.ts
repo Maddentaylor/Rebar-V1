@@ -10,10 +10,22 @@ function getSecret(): string {
   return secret;
 }
 
+const DEFAULT_USERNAME = "rebarlegacy";
+const DEFAULT_PASSWORD = "mashcnehish11254fhsc";
+
+export function getAdminUsername(): string {
+  return process.env.ADMIN_USERNAME?.trim() || DEFAULT_USERNAME;
+}
+
+export function getDefaultAdminPassword(): string {
+  return process.env.ADMIN_PASSWORD?.trim() || DEFAULT_PASSWORD;
+}
+
+/** @deprecated use getAdminUsername + getAdminPassword from db.ts */
 export function getAdminCredentials(): { username: string; password: string } {
   return {
-    username: process.env.ADMIN_USERNAME?.trim() || "rebarlegacy",
-    password: process.env.ADMIN_PASSWORD?.trim() || "AKKNDiw!!938Mama#&",
+    username: getAdminUsername(),
+    password: getDefaultAdminPassword(),
   };
 }
 
