@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createAdminToken, getAdminCredentials } from "../_lib/auth";
+import { createAdminToken, getAdminCredentials } from "../../server/auth";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {

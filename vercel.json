@@ -4,8 +4,12 @@
   "outputDirectory": "out",
   "installCommand": "npm install",
   "framework": null,
+  "functions": {
+    "api/**/*.ts": {
+      "includeFiles": "server/**"
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

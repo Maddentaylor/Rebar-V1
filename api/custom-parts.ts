@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { readBearer, verifyAdminToken } from "./_lib/auth";
-import { deleteCustomPartById, insertCustomPart, listCustomParts } from "./_lib/db";
-import { persistPartImage } from "./_lib/uploadImage";
+import { readBearer, verifyAdminToken } from "../server/auth";
+import { deleteCustomPartById, insertCustomPart, listCustomParts } from "../server/db";
+import { persistPartImage } from "../server/uploadImage";
 
 function toClientPart(row: {
   id: string;

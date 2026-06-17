@@ -11,10 +11,21 @@ export type DbCustomPart = {
   created_at: number;
 };
 
+function getDatabaseUrl(): string {
+  return (
+    process.env.POSTGRES_URL?.trim() ||
+    process.env.DATABASE_URL?.trim() ||
+    process.env.POSTGRES_URL_NON_POOLING?.trim() ||
+    ""
+  );
+}
+
 function getSql() {
-  const url = process.env.POSTGRES_URL?.trim();
+  const url = getDatabaseUrl();
   if (!url) {
-    throw new Error("POSTGRES_URL is not configured. Add a Postgres database in Vercel.");
+    throw new Error(
+      "Database URL is not configured. Connect Postgres in Vercel (POSTGRES_URL or DATABASE_URL)."
+    );
   }
   return neon(url);
 }
