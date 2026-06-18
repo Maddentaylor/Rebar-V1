@@ -3,8 +3,10 @@ import {
   parts,
   partsTypeOptions,
   machineTypeOptions,
+  partCategories,
   type PartItem,
 } from "@/mocks/parts";
+import { IndustrialFilterSelect } from "@/pages/parts/IndustrialFilterSelect";
 import { deleteCustomPart, useCustomParts } from "@/lib/customParts";
 import {
   hideCatalogPart,
@@ -24,8 +26,42 @@ export function AllPartsBrowser() {
   const { hiddenIds, refresh: refreshHidden } = useHiddenPartIds();
   const [search, setSearch] = useState("");
   const [machineTypeId, setMachineTypeId] = useState("");
+  const [partsTypeId, setPartsTypeId] = useState("");
+  const [category, setCategory] = useState("");
   const [showRemoved, setShowRemoved] = useState(false);
   const [page, setPage] = useState(0);
+
+  const availablePartsTypes = partsTypeOptions.filter(
+    (pt) => !machineTypeId || pt.machineTypeId === machineTypeId
+  );
+
+  const availableCategories = partsTypeId
+    ? Array.from(
+        new Set([
+          ...(partCategories[partsTypeId] ?? []),
+          ...customParts.filter((p) => p.partsTypeId === partsTypeId).map((p) => p.category),
+        ])
+      )
+    : [];
+
+  const handleMachineTypeChange = (val: string) => {
+    setMachineTypeId(val);
+    setPartsTypeId("");
+    setCategory("");
+    setPage(0);
+  };
+
+  const handlePartsTypeChange = (val: string) => {
+    setPartsTypeId(val);
+    setCategory("");
+    setPage(0);
+  };
+
+  const machineTypeLabel =
+    machineTypeOptions.find((m) => m.id === machineTypeId)?.label ?? "";
+  const partsTypeLabel =
+    partsTypeOptions.find((p) => p.id === partsTypeId)?.label ?? "";
+  const filtersActive = !!(machineTypeId || partsTypeId || category);
 
   const catalogParts = useMemo(() => {
     const customIds = new Set(customParts.map((p) => p.id));
@@ -53,14 +89,26 @@ export function AllPartsBrowser() {
         const pt = partsTypeOptions.find((o) => o.id === p.partsTypeId);
         if (pt?.machineTypeId !== machineTypeId) return false;
       }
+      if (partsTypeId && p.partsTypeId !== partsTypeId) return false;
+      if (category && p.category !== category) return false;
       if (!q) return true;
       return (
         p.name.toLowerCase().includes(q) ||
         p.partNumber.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q)
+        p.category.toLowerCase().includes(q) ||
+        (p.description?.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [customParts, catalogParts, hiddenIds, search, machineTypeId, showRemoved]);
+  }, [
+    customParts,
+    catalogParts,
+    hiddenIds,
+    search,
+    machineTypeId,
+    partsTypeId,
+    category,
+    showRemoved,
+  ]);
 
   const totalPages = Math.max(1, Math.ceil(allVisible.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
@@ -115,42 +163,87 @@ export function AllPartsBrowser() {
         </p>
       </div>
 
-      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="sm:col-span-2">
-          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.25em] text-ink-subtle">
-            Search
-          </label>
-          <input
-            className={inputClass}
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
-            placeholder="Name, part number, or category…"
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.25em] text-ink-subtle">
-            Machine type
-          </label>
-          <select
-            className={inputClass}
-            value={machineTypeId}
-            onChange={(e) => {
-              setMachineTypeId(e.target.value);
-              setPage(0);
-            }}
-          >
-            <option value="">All machines</option>
-            {machineTypeOptions.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="mb-5">
+        <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.25em] text-ink-subtle">
+          Search
+        </label>
+        <input
+          className={inputClass}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
+          placeholder="Name, part number, category, or description…"
+        />
       </div>
+
+      <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <IndustrialFilterSelect
+          label="Machine Type"
+          value={machineTypeId}
+          onChange={handleMachineTypeChange}
+          options={[
+            { id: "", label: "All machine types" },
+            ...machineTypeOptions.map((m) => ({ id: m.id, label: m.label })),
+          ]}
+        />
+        <IndustrialFilterSelect
+          label="Machine Parts Type"
+          value={partsTypeId}
+          onChange={handlePartsTypeChange}
+          disabled={!machineTypeId}
+          options={[
+            { id: "", label: machineTypeId ? "All parts types" : "Select machine type first" },
+            ...availablePartsTypes.map((p) => ({ id: p.id, label: p.label })),
+          ]}
+        />
+        <IndustrialFilterSelect
+          label="Part Category"
+          value={category}
+          onChange={(val) => {
+            setCategory(val);
+            setPage(0);
+          }}
+          disabled={!partsTypeId}
+          options={[
+            { id: "", label: partsTypeId ? "All categories" : "Select parts type first" },
+            ...availableCategories.map((c) => ({ id: c, label: c })),
+          ]}
+        />
+      </div>
+
+      {filtersActive && (
+        <div className="mb-5 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-ink-subtle">
+            Showing
+          </span>
+          {machineTypeId && (
+            <span className="inline-flex items-center rounded-full bg-brand-red/10 px-3 py-1 text-xs font-bold text-brand-red">
+              {machineTypeLabel}
+            </span>
+          )}
+          {partsTypeId && (
+            <>
+              <i className="ri-arrow-right-s-line text-ink-subtle" aria-hidden />
+              <span className="inline-flex items-center rounded-full bg-brand-red/10 px-3 py-1 text-xs font-bold text-brand-red">
+                {partsTypeLabel}
+              </span>
+            </>
+          )}
+          {category && (
+            <>
+              <i className="ri-arrow-right-s-line text-ink-subtle" aria-hidden />
+              <span className="inline-flex items-center rounded-full bg-brand-red/10 px-3 py-1 text-xs font-bold text-brand-red">
+                {category}
+              </span>
+            </>
+          )}
+          <span className="text-xs text-ink-subtle">
+            — {allVisible.length} part{allVisible.length !== 1 ? "s" : ""} found
+          </span>
+        </div>
+      )}
 
       <label className="mb-5 flex cursor-pointer items-center gap-2 text-sm text-ink-muted">
         <input

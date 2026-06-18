@@ -3,6 +3,9 @@ import { getDefaultAdminPassword } from "./auth";
 
 const ADMIN_PASSWORD_KEY = "admin_password";
 
+/** Previous defaults — migrated to current default on read. */
+const LEGACY_ADMIN_PASSWORDS = new Set(["mashcnehish11254fhsc", "your-secure-password"]);
+
 export type DbCustomPart = {
   id: string;
   name: string;
@@ -98,15 +101,24 @@ export async function insertCustomPart(part: DbCustomPart): Promise<void> {
 }
 
 export async function getAdminPassword(): Promise<string> {
+  const fromEnv = process.env.ADMIN_PASSWORD?.trim();
+  if (fromEnv) return fromEnv;
+
   await ensureSchema();
   const sql = getSql();
   const rows = await sql`
     SELECT value FROM admin_settings WHERE key = ${ADMIN_PASSWORD_KEY} LIMIT 1
   `;
   const stored = rows[0]?.value;
-  return typeof stored === "string" && stored.length > 0
-    ? stored
-    : getDefaultAdminPassword();
+  if (typeof stored === "string" && stored.length > 0) {
+    if (LEGACY_ADMIN_PASSWORDS.has(stored)) {
+      const next = getDefaultAdminPassword();
+      await setAdminPassword(next);
+      return next;
+    }
+    return stored;
+  }
+  return getDefaultAdminPassword();
 }
 
 export async function setAdminPassword(password: string): Promise<void> {

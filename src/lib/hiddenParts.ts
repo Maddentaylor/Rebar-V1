@@ -25,7 +25,14 @@ function notifyChange(): void {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
+/** Plain Vite dev has no /api — use localStorage unless proxied to a deployed backend. */
+function devUsesLocalStorage(): boolean {
+  return import.meta.env.DEV && !(import.meta.env.VITE_QUOTE_API_URL ?? "").trim();
+}
+
 export async function fetchHiddenPartIds(): Promise<Set<string>> {
+  if (devUsesLocalStorage()) return readLocalHidden();
+
   try {
     const res = await fetch(apiUrl("/api/hidden-parts"));
     if (res.ok) {
@@ -71,6 +78,13 @@ export async function hideCatalogPart(id: string): Promise<void> {
 }
 
 export async function restoreCatalogPart(id: string): Promise<void> {
+  if (devUsesLocalStorage()) {
+    const next = readLocalHidden();
+    next.delete(id);
+    writeLocalHidden(next);
+    return;
+  }
+
   try {
     const res = await fetch(apiUrl(`/api/hidden-parts?id=${encodeURIComponent(id)}`), {
       method: "DELETE",

@@ -12,7 +12,13 @@ function notifyChange(): void {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
+function devUsesLocalOnly(): boolean {
+  return import.meta.env.DEV && !(import.meta.env.VITE_QUOTE_API_URL ?? "").trim();
+}
+
 export async function fetchCustomParts(): Promise<CustomPart[]> {
+  if (devUsesLocalOnly()) return [];
+
   const res = await fetch(apiUrl("/api/custom-parts"));
   if (!res.ok) {
     throw new Error("Could not load uploaded parts.");
@@ -24,6 +30,12 @@ export async function fetchCustomParts(): Promise<CustomPart[]> {
 export async function addCustomPart(
   part: Omit<CustomPart, "createdAt">
 ): Promise<CustomPart> {
+  if (devUsesLocalOnly()) {
+    throw new Error(
+      "Saving parts locally requires the API. Run npm run dev:vercel or set VITE_QUOTE_API_URL to your deployed site."
+    );
+  }
+
   const res = await fetch(apiUrl("/api/custom-parts"), {
     method: "POST",
     headers: {

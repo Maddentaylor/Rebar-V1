@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { readBearer, verifyAdminToken } from "../../server/auth";
+import { readBearer, verifyAdminToken } from "../server/auth";
 import {
   hidePartById,
   listHiddenPartIds,
   unhidePartById,
-} from "../../server/db";
+} from "../server/db";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {

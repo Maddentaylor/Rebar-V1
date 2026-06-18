@@ -5,7 +5,7 @@ import {
   partsTypeOptions,
   partCategories,
 } from "@/mocks/parts";
-import { useAdminAuth, changePassword } from "@/lib/adminAuth";
+import { useAdminAuth, changePassword, ADMIN_USERNAME, ADMIN_PASSWORD } from "@/lib/adminAuth";
 import {
   addCustomPart,
   deleteCustomPart,
@@ -59,21 +59,31 @@ function PasswordInput({
 }
 
 function LoginScreen({ onLogin }: { onLogin: (u: string, p: string) => Promise<boolean> }) {
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(ADMIN_USERNAME);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const attemptLogin = async (u: string, p: string) => {
     setBusy(true);
     setError("");
-    const ok = await onLogin(username, password);
+    const ok = await onLogin(u, p);
     setBusy(false);
     if (!ok) {
       setError("Incorrect username or password.");
       setPassword("");
     }
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await attemptLogin(username, password);
+  };
+
+  const quickSignIn = async () => {
+    setUsername(ADMIN_USERNAME);
+    setPassword(ADMIN_PASSWORD);
+    await attemptLogin(ADMIN_USERNAME, ADMIN_PASSWORD);
   };
 
   return (
@@ -94,7 +104,12 @@ function LoginScreen({ onLogin }: { onLogin: (u: string, p: string) => Promise<b
         >
           Sign in
         </h1>
-        <p className="mb-6 text-sm text-ink-muted">Restricted area — staff only.</p>
+        <p className="mb-4 text-sm text-ink-muted">Restricted area — staff only.</p>
+        <p className="mb-6 rounded-lg bg-canvas px-3 py-2 text-xs text-ink-muted">
+          Username: <strong className="text-ink">{ADMIN_USERNAME}</strong>
+          {" · "}
+          Password: <strong className="text-ink">{ADMIN_PASSWORD}</strong>
+        </p>
 
         <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.25em] text-ink-subtle">
           Username
@@ -120,6 +135,15 @@ function LoginScreen({ onLogin }: { onLogin: (u: string, p: string) => Promise<b
         </div>
 
         {error && <p className="mb-3 text-sm font-medium text-brand-red">{error}</p>}
+
+        <button
+          type="button"
+          onClick={() => void quickSignIn()}
+          disabled={busy}
+          className="mb-3 w-full rounded-full border-2 border-brand-red bg-white px-6 py-3 text-sm font-bold uppercase tracking-[0.18em] text-brand-red transition-colors hover:bg-brand-red hover:text-white disabled:opacity-50"
+        >
+          {busy ? "Signing in…" : "Quick sign in"}
+        </button>
 
         <button
           type="submit"
