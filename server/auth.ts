@@ -10,8 +10,8 @@ function getSecret(): string {
   return secret;
 }
 
-const DEFAULT_USERNAME = "rebarlegacy";
-const DEFAULT_PASSWORD = "mashcnehish11254fhsc";
+const DEFAULT_USERNAME = "rebar";
+const DEFAULT_PASSWORD = "Madden19!";
 
 export function getAdminUsername(): string {
   return process.env.ADMIN_USERNAME?.trim() || DEFAULT_USERNAME;
@@ -27,6 +27,18 @@ export function getAdminCredentials(): { username: string; password: string } {
     username: getAdminUsername(),
     password: getDefaultAdminPassword(),
   };
+}
+
+export function credentialsMatch(
+  inputUser: string,
+  inputPass: string,
+  expectedUser: string,
+  expectedPass: string
+): boolean {
+  return (
+    inputUser.trim().toLowerCase() === expectedUser.trim().toLowerCase() &&
+    inputPass.toLowerCase() === expectedPass.toLowerCase()
+  );
 }
 
 export function createAdminToken(username: string): string {

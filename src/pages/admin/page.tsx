@@ -12,6 +12,7 @@ import {
   fileToCompressedDataUrl,
   useCustomParts,
 } from "@/lib/customParts";
+import { AllPartsBrowser } from "./AllPartsBrowser";
 
 const NEW_CATEGORY = "__new__";
 
@@ -602,6 +603,8 @@ export default function AdminPage() {
             <ChangePasswordForm />
           </div>
         </div>
+
+        <AllPartsBrowser />
       </main>
     </div>
   );

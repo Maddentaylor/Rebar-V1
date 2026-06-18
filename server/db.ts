@@ -57,6 +57,12 @@ export function ensureSchema(): Promise<void> {
           value TEXT NOT NULL
         )
       `;
+      await sql`
+        CREATE TABLE IF NOT EXISTS hidden_parts (
+          part_id TEXT PRIMARY KEY,
+          hidden_at BIGINT NOT NULL
+        )
+      `;
     })();
   }
   return schemaReady;
@@ -118,6 +124,32 @@ export async function deleteCustomPartById(id: string): Promise<boolean> {
   const sql = getSql();
   const rows = await sql`
     DELETE FROM custom_parts WHERE id = ${id} RETURNING id
+  `;
+  return rows.length > 0;
+}
+
+export async function listHiddenPartIds(): Promise<string[]> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = await sql`SELECT part_id FROM hidden_parts ORDER BY hidden_at DESC`;
+  return rows.map((r) => String(r.part_id));
+}
+
+export async function hidePartById(id: string): Promise<void> {
+  await ensureSchema();
+  const sql = getSql();
+  await sql`
+    INSERT INTO hidden_parts (part_id, hidden_at)
+    VALUES (${id}, ${Date.now()})
+    ON CONFLICT (part_id) DO NOTHING
+  `;
+}
+
+export async function unhidePartById(id: string): Promise<boolean> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = await sql`
+    DELETE FROM hidden_parts WHERE part_id = ${id} RETURNING part_id
   `;
   return rows.length > 0;
 }

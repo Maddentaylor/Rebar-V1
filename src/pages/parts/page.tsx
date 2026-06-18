@@ -15,10 +15,15 @@ import {
 import { IndustrialFilterSelect } from "./IndustrialFilterSelect";
 import CatalogQuoteAddControls from "@/components/parts/CatalogQuoteAddControls";
 import { useCustomParts } from "@/lib/customParts";
+import { useHiddenPartIds } from "@/lib/hiddenParts";
 
 export default function PartsPage() {
   const { parts: customParts } = useCustomParts();
-  const allParts: PartItem[] = [...customParts, ...parts];
+  const { hiddenIds } = useHiddenPartIds();
+  const allParts: PartItem[] = [
+    ...customParts,
+    ...parts.filter((p) => !hiddenIds.has(p.id)),
+  ];
   const [selectedMachineType, setSelectedMachineType] = useState<string>("");
   const [selectedPartsType, setSelectedPartsType] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");

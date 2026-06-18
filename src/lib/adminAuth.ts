@@ -5,6 +5,24 @@ const SESSION_KEY = "rms_admin_user";
 const TOKEN_KEY = "rms_admin_token";
 const CHANGE_EVENT = "rms-admin-auth-changed";
 
+/** Matches server defaults — used for local dev when /api is not running. */
+const LOCAL_DEV_USERNAME = "rebar";
+const LOCAL_DEV_PASSWORD = "Madden19!";
+
+function tryLocalDevLogin(username: string, password: string): boolean {
+  if (!import.meta.env.DEV) return false;
+  if (
+    username.trim().toLowerCase() === LOCAL_DEV_USERNAME.toLowerCase() &&
+    password.toLowerCase() === LOCAL_DEV_PASSWORD.toLowerCase()
+  ) {
+    window.sessionStorage.setItem(TOKEN_KEY, "dev-local-session");
+    window.sessionStorage.setItem(SESSION_KEY, LOCAL_DEV_USERNAME);
+    window.dispatchEvent(new Event(CHANGE_EVENT));
+    return true;
+  }
+  return false;
+}
+
 export async function login(username: string, password: string): Promise<boolean> {
   try {
     const res = await fetch(apiUrl("/api/admin/login"), {
@@ -13,17 +31,23 @@ export async function login(username: string, password: string): Promise<boolean
       body: JSON.stringify({ username, password }),
     });
 
-    if (!res.ok) return false;
+    if (res.ok) {
+      const data = (await res.json()) as { token?: string; username?: string };
+      if (!data.token || !data.username) return false;
 
-    const data = (await res.json()) as { token?: string; username?: string };
-    if (!data.token || !data.username) return false;
+      window.sessionStorage.setItem(TOKEN_KEY, data.token);
+      window.sessionStorage.setItem(SESSION_KEY, data.username);
+      window.dispatchEvent(new Event(CHANGE_EVENT));
+      return true;
+    }
 
-    window.sessionStorage.setItem(TOKEN_KEY, data.token);
-    window.sessionStorage.setItem(SESSION_KEY, data.username);
-    window.dispatchEvent(new Event(CHANGE_EVENT));
-    return true;
+    // Wrong credentials from live API
+    if (res.status === 401) return false;
+
+    // API missing or not configured — allow local dev login on localhost
+    return tryLocalDevLogin(username, password);
   } catch {
-    return false;
+    return tryLocalDevLogin(username, password);
   }
 }
 
