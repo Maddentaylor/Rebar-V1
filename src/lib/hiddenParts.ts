@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { apiUrl, authHeaders } from "@/lib/apiClient";
+import { apiUrl, authHeaders, getAdminToken } from "@/lib/apiClient";
 
 const LOCAL_KEY = "rms_hidden_parts_v1";
 const CHANGE_EVENT = "rms-hidden-parts-changed";
@@ -25,13 +25,16 @@ function notifyChange(): void {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-/** Plain Vite dev has no /api — use localStorage unless proxied to a deployed backend. */
-function devUsesLocalStorage(): boolean {
-  return import.meta.env.DEV && !(import.meta.env.VITE_QUOTE_API_URL ?? "").trim();
+/** Use browser storage when there is no working authenticated API (local dev or offline session). */
+function usesOfflineHiddenStore(): boolean {
+  if (import.meta.env.DEV && !(import.meta.env.VITE_QUOTE_API_URL ?? "").trim()) {
+    return true;
+  }
+  return getAdminToken() === "dev-local-session";
 }
 
 export async function fetchHiddenPartIds(): Promise<Set<string>> {
-  if (devUsesLocalStorage()) return readLocalHidden();
+  if (usesOfflineHiddenStore()) return readLocalHidden();
 
   try {
     const res = await fetch(apiUrl("/api/hidden-parts"));
@@ -40,13 +43,19 @@ export async function fetchHiddenPartIds(): Promise<Set<string>> {
       return new Set(Array.isArray(data.ids) ? data.ids : []);
     }
   } catch {
-    /* fall through to local dev storage */
+    /* fall through */
   }
-  if (import.meta.env.DEV) return readLocalHidden();
-  return new Set();
+  return readLocalHidden();
 }
 
 export async function hideCatalogPart(id: string): Promise<void> {
+  if (usesOfflineHiddenStore()) {
+    const next = readLocalHidden();
+    next.add(id);
+    writeLocalHidden(next);
+    return;
+  }
+
   try {
     const res = await fetch(apiUrl("/api/hidden-parts"), {
       method: "POST",
@@ -62,23 +71,16 @@ export async function hideCatalogPart(id: string): Promise<void> {
       return;
     }
   } catch (err) {
-    if (!import.meta.env.DEV) {
-      throw err instanceof Error ? err : new Error("Could not remove part.");
-    }
+    if (err instanceof Error && err.message.includes("Session expired")) throw err;
   }
 
-  if (import.meta.env.DEV) {
-    const next = readLocalHidden();
-    next.add(id);
-    writeLocalHidden(next);
-    return;
-  }
-
-  throw new Error("Could not remove part.");
+  const next = readLocalHidden();
+  next.add(id);
+  writeLocalHidden(next);
 }
 
 export async function restoreCatalogPart(id: string): Promise<void> {
-  if (devUsesLocalStorage()) {
+  if (usesOfflineHiddenStore()) {
     const next = readLocalHidden();
     next.delete(id);
     writeLocalHidden(next);
@@ -98,14 +100,9 @@ export async function restoreCatalogPart(id: string): Promise<void> {
     /* local fallback below */
   }
 
-  if (import.meta.env.DEV) {
-    const next = readLocalHidden();
-    next.delete(id);
-    writeLocalHidden(next);
-    return;
-  }
-
-  throw new Error("Could not restore part.");
+  const next = readLocalHidden();
+  next.delete(id);
+  writeLocalHidden(next);
 }
 
 export function isCustomPartId(id: string): boolean {

@@ -1,7 +1,11 @@
-import { neon } from "@neondatabase/serverless";
-import { getDefaultAdminPassword } from "./auth";
+type SqlClient = ReturnType<typeof import("@neondatabase/serverless").neon>;
 
 const ADMIN_PASSWORD_KEY = "admin_password";
+const DEFAULT_ADMIN_PASSWORD = "Madden19!";
+
+function defaultAdminPassword(): string {
+  return process.env.ADMIN_PASSWORD?.trim() || DEFAULT_ADMIN_PASSWORD;
+}
 
 /** Previous defaults — migrated to current default on read. */
 const LEGACY_ADMIN_PASSWORDS = new Set(["mashcnehish11254fhsc", "your-secure-password"]);
@@ -26,14 +30,22 @@ function getDatabaseUrl(): string {
   );
 }
 
-function getSql() {
+let sqlClient: SqlClient | null = null;
+
+function getSql(): SqlClient {
   const url = getDatabaseUrl();
   if (!url) {
     throw new Error(
       "Database URL is not configured. Connect Postgres in Vercel (POSTGRES_URL or DATABASE_URL)."
     );
   }
-  return neon(url);
+  if (!sqlClient) {
+    // Lazy load so API routes that don't need Postgres can still start on Vercel.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { neon } = require("@neondatabase/serverless") as typeof import("@neondatabase/serverless");
+    sqlClient = neon(url);
+  }
+  return sqlClient;
 }
 
 let schemaReady: Promise<void> | null = null;
@@ -104,21 +116,25 @@ export async function getAdminPassword(): Promise<string> {
   const fromEnv = process.env.ADMIN_PASSWORD?.trim();
   if (fromEnv) return fromEnv;
 
-  await ensureSchema();
-  const sql = getSql();
-  const rows = await sql`
-    SELECT value FROM admin_settings WHERE key = ${ADMIN_PASSWORD_KEY} LIMIT 1
-  `;
-  const stored = rows[0]?.value;
-  if (typeof stored === "string" && stored.length > 0) {
-    if (LEGACY_ADMIN_PASSWORDS.has(stored)) {
-      const next = getDefaultAdminPassword();
-      await setAdminPassword(next);
-      return next;
+  try {
+    await ensureSchema();
+    const sql = getSql();
+    const rows = await sql`
+      SELECT value FROM admin_settings WHERE key = ${ADMIN_PASSWORD_KEY} LIMIT 1
+    `;
+    const stored = rows[0]?.value;
+    if (typeof stored === "string" && stored.length > 0) {
+      if (LEGACY_ADMIN_PASSWORDS.has(stored)) {
+        const next = defaultAdminPassword();
+        await setAdminPassword(next);
+        return next;
+      }
+      return stored;
     }
-    return stored;
+  } catch (err) {
+    console.warn("getAdminPassword: using default", err);
   }
-  return getDefaultAdminPassword();
+  return defaultAdminPassword();
 }
 
 export async function setAdminPassword(password: string): Promise<void> {
@@ -141,10 +157,15 @@ export async function deleteCustomPartById(id: string): Promise<boolean> {
 }
 
 export async function listHiddenPartIds(): Promise<string[]> {
-  await ensureSchema();
-  const sql = getSql();
-  const rows = await sql`SELECT part_id FROM hidden_parts ORDER BY hidden_at DESC`;
-  return rows.map((r) => String(r.part_id));
+  try {
+    await ensureSchema();
+    const sql = getSql();
+    const rows = await sql`SELECT part_id FROM hidden_parts ORDER BY hidden_at DESC`;
+    return rows.map((r) => String(r.part_id));
+  } catch (err) {
+    console.error("listHiddenPartIds:", err);
+    return [];
+  }
 }
 
 export async function hidePartById(id: string): Promise<void> {

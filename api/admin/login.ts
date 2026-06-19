@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { adminLoginAccepted, createAdminToken, getAdminUsername } from "../../server/auth";
-import { getAdminPassword } from "../../server/db";
+import { adminLoginAccepted, createAdminToken, getAdminUsername, getDefaultAdminPassword } from "../../server/auth";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -24,7 +23,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const expectedUser = getAdminUsername();
-    const expectedPassword = await getAdminPassword();
+    // Prefer env/default password so login works even when Postgres is not connected yet.
+    let expectedPassword = getDefaultAdminPassword();
+    try {
+      const { getAdminPassword } = await import("../../server/db");
+      expectedPassword = await getAdminPassword();
+    } catch (err) {
+      console.warn("admin/login: using default password", err);
+    }
 
     if (!adminLoginAccepted(username, password, expectedUser, expectedPassword)) {
       return res.status(401).json({ error: "Incorrect username or password." });

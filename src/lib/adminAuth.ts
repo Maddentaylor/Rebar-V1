@@ -9,6 +9,10 @@ const CHANGE_EVENT = "rms-admin-auth-changed";
 export const ADMIN_USERNAME = "rebar";
 export const ADMIN_PASSWORD = "Madden19!";
 
+export type LoginResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
 function isLocalHost(): boolean {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;
@@ -28,43 +32,56 @@ function saveSession(username: string, token = "dev-local-session"): void {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-export async function login(username: string, password: string): Promise<boolean> {
-  // Localhost: never call remote API — avoids Vercel/env mismatches during dev.
-  if (isLocalHost() && simpleLoginAccepted(username, password)) {
-    saveSession(ADMIN_USERNAME);
-    return true;
+function offlineSession(): LoginResult {
+  saveSession(ADMIN_USERNAME);
+  return { ok: true };
+}
+
+export async function login(username: string, password: string): Promise<LoginResult> {
+  if (!simpleLoginAccepted(username, password)) {
+    return { ok: false, error: "Incorrect username or password." };
   }
 
-  if (simpleLoginAccepted(username, password)) {
-    try {
-      const res = await fetch(apiUrl("/api/admin/login"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+  // Localhost: skip API entirely.
+  if (isLocalHost()) {
+    return offlineSession();
+  }
 
-      if (res.ok) {
-        const data = (await res.json()) as { token?: string; username?: string };
-        if (data.token && data.username) {
-          saveSession(data.username, data.token);
-          return true;
-        }
-      }
+  try {
+    const res = await fetch(apiUrl("/api/admin/login"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
 
-      // API unavailable or misconfigured — still allow the simple password locally.
-      if (import.meta.env.DEV || isLocalHost()) {
-        saveSession(ADMIN_USERNAME);
-        return true;
+    if (res.ok) {
+      const data = (await res.json()) as { token?: string; username?: string };
+      if (data.token && data.username) {
+        saveSession(data.username, data.token);
+        return { ok: true };
       }
-    } catch {
-      if (import.meta.env.DEV || isLocalHost()) {
-        saveSession(ADMIN_USERNAME);
-        return true;
-      }
+      return { ok: false, error: "Login response was invalid. Try again." };
     }
-  }
 
-  return false;
+    let message = "Could not sign in. Try again in a moment.";
+    try {
+      const data = (await res.json()) as { error?: string };
+      if (data.error) message = data.error;
+    } catch {
+      /* ignore */
+    }
+
+    if (res.status === 401) {
+      return { ok: false, error: "Incorrect username or password." };
+    }
+
+    // API misconfigured or down — still allow staff in with local session.
+    console.warn("admin login API failed:", res.status, message);
+    return offlineSession();
+  } catch (err) {
+    console.warn("admin login API unreachable:", err);
+    return offlineSession();
+  }
 }
 
 export function logout(): void {
@@ -80,7 +97,7 @@ export function getCurrentAdmin(): string | null {
 
 export function useAdminAuth(): {
   user: string | null;
-  login: (u: string, p: string) => Promise<boolean>;
+  login: (u: string, p: string) => Promise<LoginResult>;
   logout: () => void;
 } {
   const [user, setUser] = useState<string | null>(() => getCurrentAdmin());

@@ -5,7 +5,7 @@ import {
   partsTypeOptions,
   partCategories,
 } from "@/mocks/parts";
-import { useAdminAuth, changePassword, ADMIN_USERNAME, ADMIN_PASSWORD } from "@/lib/adminAuth";
+import { useAdminAuth, changePassword, ADMIN_USERNAME, ADMIN_PASSWORD, type LoginResult } from "@/lib/adminAuth";
 import {
   addCustomPart,
   deleteCustomPart,
@@ -58,7 +58,7 @@ function PasswordInput({
   );
 }
 
-function LoginScreen({ onLogin }: { onLogin: (u: string, p: string) => Promise<boolean> }) {
+function LoginScreen({ onLogin }: { onLogin: (u: string, p: string) => Promise<LoginResult> }) {
   const [username, setUsername] = useState(ADMIN_USERNAME);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -67,10 +67,10 @@ function LoginScreen({ onLogin }: { onLogin: (u: string, p: string) => Promise<b
   const attemptLogin = async (u: string, p: string) => {
     setBusy(true);
     setError("");
-    const ok = await onLogin(u, p);
+    const result = await onLogin(u, p);
     setBusy(false);
-    if (!ok) {
-      setError("Incorrect username or password.");
+    if (result.ok === false) {
+      setError(result.error);
       setPassword("");
     }
   };
