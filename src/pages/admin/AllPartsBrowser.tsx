@@ -14,6 +14,7 @@ import {
   restoreCatalogPart,
   useHiddenPartIds,
 } from "@/lib/hiddenParts";
+import { PartEditModal } from "./PartEditModal";
 
 const PAGE_SIZE = 50;
 
@@ -22,8 +23,11 @@ function labelForPartsType(partsTypeId: string): string {
 }
 
 export function AllPartsBrowser() {
-  const { parts: customParts } = useCustomParts();
+  const { parts: customParts, refresh: refreshCustom } = useCustomParts();
   const { hiddenIds, refresh: refreshHidden } = useHiddenPartIds();
+  const [editingPart, setEditingPart] = useState<
+    (PartItem & { isCustom: boolean; isHidden: boolean }) | null
+  >(null);
   const [search, setSearch] = useState("");
   const [machineTypeId, setMachineTypeId] = useState("");
   const [partsTypeId, setPartsTypeId] = useState("");
@@ -154,8 +158,8 @@ export function AllPartsBrowser() {
             All catalog parts
           </h2>
           <p className="mt-1 text-sm text-ink-muted">
-            Browse every part on the site. Remove hides it from the public Parts page; uploaded
-            parts are deleted permanently.
+            Browse every part on the site. Click a part to edit it. Remove hides it from the
+            public Parts page; uploaded parts are deleted permanently.
           </p>
         </div>
         <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-ink-subtle">
@@ -265,7 +269,16 @@ export function AllPartsBrowser() {
           pageItems.map((part) => (
             <div
               key={part.id}
-              className={`flex items-center gap-3 rounded-lg border bg-white p-3 ${
+              role="button"
+              tabIndex={0}
+              onClick={() => setEditingPart(part)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setEditingPart(part);
+                }
+              }}
+              className={`flex cursor-pointer items-center gap-3 rounded-lg border bg-white p-3 transition-colors hover:border-brand-red/40 hover:bg-brand-red/[0.03] ${
                 part.isHidden ? "border-ink-subtle/40 opacity-70" : "border-canvas-edge"
               }`}
             >
@@ -287,7 +300,10 @@ export function AllPartsBrowser() {
               </div>
               <button
                 type="button"
-                onClick={() => void handleRemove(part)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void handleRemove(part);
+                }}
                 className="shrink-0 rounded-full border border-canvas-edge px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-ink-subtle transition-colors hover:border-brand-red/50 hover:text-brand-red"
               >
                 {part.isHidden ? "Restore" : "Remove"}
@@ -319,6 +335,17 @@ export function AllPartsBrowser() {
             Next
           </button>
         </div>
+      )}
+
+      {editingPart && (
+        <PartEditModal
+          part={editingPart}
+          onClose={() => setEditingPart(null)}
+          onSaved={() => {
+            refreshCustom();
+            refreshHidden();
+          }}
+        />
       )}
     </section>
   );

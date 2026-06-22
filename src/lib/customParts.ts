@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { PartItem } from "@/mocks/parts";
-import { apiUrl, authHeaders } from "@/lib/apiClient";
+import { apiUrl, authHeaders, getAdminToken } from "@/lib/apiClient";
 
 const CHANGE_EVENT = "rms-custom-parts-changed";
+const LOCAL_KEY = "rms_custom_parts_v1";
 
 export interface CustomPart extends PartItem {
   createdAt: number;
@@ -12,12 +13,32 @@ function notifyChange(): void {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-function devUsesLocalOnly(): boolean {
-  return import.meta.env.DEV && !(import.meta.env.VITE_QUOTE_API_URL ?? "").trim();
+function usesOfflineCustomParts(): boolean {
+  if (import.meta.env.DEV && !(import.meta.env.VITE_QUOTE_API_URL ?? "").trim()) {
+    return true;
+  }
+  return getAdminToken() === "dev-local-session";
+}
+
+function readLocalCustomParts(): CustomPart[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(LOCAL_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as CustomPart[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalCustomParts(parts: CustomPart[]): void {
+  window.localStorage.setItem(LOCAL_KEY, JSON.stringify(parts));
+  notifyChange();
 }
 
 export async function fetchCustomParts(): Promise<CustomPart[]> {
-  if (devUsesLocalOnly()) return [];
+  if (usesOfflineCustomParts()) return readLocalCustomParts();
 
   const res = await fetch(apiUrl("/api/custom-parts"));
   if (!res.ok) {
@@ -30,10 +51,13 @@ export async function fetchCustomParts(): Promise<CustomPart[]> {
 export async function addCustomPart(
   part: Omit<CustomPart, "createdAt">
 ): Promise<CustomPart> {
-  if (devUsesLocalOnly()) {
-    throw new Error(
-      "Saving parts locally requires the API. Run npm run dev:vercel or set VITE_QUOTE_API_URL to your deployed site."
-    );
+  const payload: CustomPart = { ...part, createdAt: Date.now() };
+
+  if (usesOfflineCustomParts()) {
+    const next = readLocalCustomParts().filter((p) => p.id !== part.id);
+    next.unshift(payload);
+    writeLocalCustomParts(next);
+    return payload;
   }
 
   const res = await fetch(apiUrl("/api/custom-parts"), {
@@ -68,7 +92,58 @@ export async function addCustomPart(
   return data.part;
 }
 
+export async function updateCustomPart(part: Omit<CustomPart, "createdAt">): Promise<CustomPart> {
+  if (usesOfflineCustomParts()) {
+    const existing = readLocalCustomParts().find((p) => p.id === part.id);
+    const payload: CustomPart = {
+      ...part,
+      createdAt: existing?.createdAt ?? Date.now(),
+    };
+    const next = readLocalCustomParts().filter((p) => p.id !== part.id);
+    next.unshift(payload);
+    writeLocalCustomParts(next);
+    return payload;
+  }
+
+  const res = await fetch(apiUrl("/api/custom-parts"), {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({
+      id: part.id,
+      name: part.name,
+      partNumber: part.partNumber,
+      partsTypeId: part.partsTypeId,
+      category: part.category,
+      image: part.image,
+      description: part.description,
+    }),
+  });
+
+  if (res.status === 401) {
+    throw new Error("Session expired. Sign in again.");
+  }
+
+  const data = (await res.json()) as { part?: CustomPart; error?: string };
+  if (!res.ok) {
+    throw new Error(data.error ?? "Could not update part.");
+  }
+  if (!data.part) {
+    throw new Error("Could not update part.");
+  }
+
+  notifyChange();
+  return data.part;
+}
+
 export async function deleteCustomPart(id: string): Promise<void> {
+  if (usesOfflineCustomParts()) {
+    writeLocalCustomParts(readLocalCustomParts().filter((p) => p.id !== id));
+    return;
+  }
+
   const res = await fetch(apiUrl(`/api/custom-parts?id=${encodeURIComponent(id)}`), {
     method: "DELETE",
     headers: authHeaders(),

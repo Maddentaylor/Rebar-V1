@@ -20,9 +20,10 @@ import { useHiddenPartIds } from "@/lib/hiddenParts";
 export default function PartsPage() {
   const { parts: customParts } = useCustomParts();
   const { hiddenIds } = useHiddenPartIds();
+  const customIds = new Set(customParts.map((p) => p.id));
   const allParts: PartItem[] = [
     ...customParts,
-    ...parts.filter((p) => !hiddenIds.has(p.id)),
+    ...parts.filter((p) => !hiddenIds.has(p.id) && !customIds.has(p.id)),
   ];
   const [selectedMachineType, setSelectedMachineType] = useState<string>("");
   const [selectedPartsType, setSelectedPartsType] = useState<string>("");

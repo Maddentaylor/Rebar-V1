@@ -112,6 +112,43 @@ export async function insertCustomPart(part: DbCustomPart): Promise<void> {
   `;
 }
 
+export async function getCustomPartById(id: string): Promise<DbCustomPart | null> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = await sql`
+    SELECT id, name, part_number, parts_type_id, category, image, description, created_at
+    FROM custom_parts
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+  return (rows[0] as DbCustomPart | undefined) ?? null;
+}
+
+export async function upsertCustomPart(part: DbCustomPart): Promise<void> {
+  await ensureSchema();
+  const sql = getSql();
+  await sql`
+    INSERT INTO custom_parts (id, name, part_number, parts_type_id, category, image, description, created_at)
+    VALUES (
+      ${part.id},
+      ${part.name},
+      ${part.part_number},
+      ${part.parts_type_id},
+      ${part.category},
+      ${part.image},
+      ${part.description},
+      ${part.created_at}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      name = EXCLUDED.name,
+      part_number = EXCLUDED.part_number,
+      parts_type_id = EXCLUDED.parts_type_id,
+      category = EXCLUDED.category,
+      image = EXCLUDED.image,
+      description = EXCLUDED.description
+  `;
+}
+
 export async function getAdminPassword(): Promise<string> {
   const fromEnv = process.env.ADMIN_PASSWORD?.trim();
   if (fromEnv) return fromEnv;
